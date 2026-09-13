@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brand Store | Clothing & Apparel</title>
+    <style>
+        :root {
+            --bg-color: #0f0f0f;
+            --card-bg: #1a1a1a;
+            --accent: #ffffff;
+            --text-muted: #888888;
+            --border: #333333;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--accent); min-height: 100vh; display: flex; flex-direction: column; }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; border-bottom: 1px solid var(--border); background: var(--card-bg); position: sticky; top: 0; z-index: 100; }
+        .logo { font-size: 1.5rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+        .cart-btn { background: var(--accent); color: var(--bg-color); border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 4px; transition: opacity 0.2s; }
+        .cart-btn:hover { opacity: 0.8; }
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; flex: 1; width: 100%; }
+        .hero { text-align: center; margin-bottom: 50px; }
+        .hero h1 { font-size: 3rem; margin-bottom: 10px; font-weight: 900; }
+        .hero p { color: var(--text-muted); font-size: 1.1rem; }
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; }
+        .product-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s; }
+        .product-card:hover { transform: translateY(-5px); }
+        .product-img { width: 100%; height: 320px; background: #222; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.9rem; }
+        .product-info { padding: 20px; display: flex; flex-direction: column; flex: 1; justify-content: space-between; }
+        .product-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 8px; }
+        .product-price { font-size: 1.1rem; color: #aaa; margin-bottom: 15px; }
+        .add-to-cart { width: 100%; background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; transition: background 0.2s, color 0.2s; }
+        .add-to-cart:hover { background: var(--accent); color: var(--bg-color); }
+        
+        /* Cart Drawer */
+        .cart-drawer { position: fixed; top: 0; right: -400px; width: 400px; height: 100%; background: var(--card-bg); border-left: 1px solid var(--border); box-shadow: -5px 0 15px rgba(0,0,0,0.5); transition: right 0.3s ease; z-index: 1000; display: flex; flex-direction: column; padding: 25px; }
+        .cart-drawer.open { right: 0; }
+        .cart-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; font-size: 1.2rem; font-weight: bold; }
+        .close-cart { background: none; border: none; color: var(--accent); font-size: 1.5rem; cursor: pointer; }
+        .cart-items { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .cart-footer { border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px; }
+        .total-price { display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; }
+        .checkout-btn { width: 100%; background: #22c55e; color: white; border: none; padding: 14px; font-weight: bold; font-size: 1rem; border-radius: 4px; cursor: pointer; }
+        .checkout-btn:hover { background: #16a34a; }
+        footer { text-align: center; padding: 30px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.9rem; margin-top: auto; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">SYNTH // APPAREL</div>
+        <button class="cart-btn" onclick="toggleCart()">Cart (<span id="cart-count">0</span>)</button>
+    </header>
+
+    <div class="container">
+        <div class="hero">
+            <h1>New Season Drop</h1>
+            <p>Premium heavyweight streetwear and custom cut-and-sew apparel.</p>
+        </div>
+
+        <div class="products-grid" id="product-grid">
+            <!-- Products injected via JavaScript -->
+        </div>
+    </div>
+
+    <!-- Cart Drawer -->
+    <div class="cart-drawer" id="cartDrawer">
+        <div class="cart-header">
+            <span>Your Cart</span>
+            <button class="close-cart" onclick="toggleCart()">&times;</button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <p style="color: var(--text-muted); text-align: center; margin-top: 40px;">Your cart is empty.</p>
+        </div>
+        <div class="cart-footer">
+            <div class="total-price">
+                <span>Total:</span>
+                <span id="cart-total">$0.00</span>
+            </div>
+            <button class="checkout-btn" onclick="checkout()">Checkout</button>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2026 SYNTH APPAREL. Powered by GitHub Pages.
+    </footer>
+
+    <script>
+        const products = [
+            { id: 1, name: "Heavyweight Boxy Hoodie", price: 85.00, image: "Hoodie Preview" },
+            { id: 2, name: "Acid Wash Graphic Tee", price: 42.00, image: "Tee Preview" },
+            { id: 3, name: "Relaxed Fit Cargo Pants", price: 95.00, image: "Pants Preview" },
+            { id: 4, name: "Embroidered Snapback Cap", price: 35.00, image: "Cap Preview" }
+        ];
+
+        let cart = [];
+
+        function renderProducts() {
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = products.map(p => `
+                <div class="product-card">
+                    <div class="product-img">${p.image}</div>
+                    <div class="product-info">
+                        <div>
+                            <div class="product-title">${p.name}</div>
+                            <div class="product-price">$${p.price.toFixed(2)}</div>
+                        </div>
+                        <button class="add-to-cart" onclick="addToCart(${p.id})">Add to Cart</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleCart() {
+            document.getElementById('cartDrawer').classList.toggle('open');
+        }
+
+        function addToCart(id) {
+            const product = products.find(p => p.id === id);
+            const existing = cart.find(item => item.id === id);
+            if (existing) {
+                existing.qty++;
+            } else {
+                cart.push({ ...product, qty: 1 });
+            }
+            updateCartUI();
+            toggleCart();
+        }
+
+        function removeFromCart(id) {
+            cart = cart.filter(item => item.id !== id);
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            document.getElementById('cart-count').innerText = cart.reduce((sum, item) => sum + item.qty, 0);
+            const container = document.getElementById('cartItems');
+            
+            if (cart.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); text-align: center; margin-top: 40px;">Your cart is empty.</p>';
+                document.getElementById('cart-total').innerText = '$0.00';
+                return;
+            }
+
+            let total = 0;
+            container.innerHTML = cart.map(item => {
+                total += item.price * item.qty;
+                return `
+                    <div class="cart-item">
+                        <div>
+                            <div style="font-weight: 600;">${item.name}</div>
+                            <div style="font-size: 0.9rem; color: var(--text-muted);">Qty: ${item.qty} x $${item.price.toFixed(2)}</div>
+                        </div>
+                        <button onclick="removeFromCart(${item.id})" style="background:none; border:none; color:#ef4444; cursor:pointer;">Remove</button>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('cart-total').innerText = `$${total.toFixed(2)}`;
+        }
+
+        function checkout() {
+            if (cart.length === 0) return alert('Your cart is empty!');
+            alert('Redirecting to secure payment checkout gateway...');
+            // Integrate Stripe checkout links or webhook handlers here for live processing
+        }
+
+        renderProducts();
+    </script>
+</body>
+</html>
