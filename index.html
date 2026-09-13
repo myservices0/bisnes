@@ -5,104 +5,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>tomboytuff</title>
     <style>
-        /* Dark Theme Aesthetic */
-        :root {
-            --bg: #0d0d0d;
-            --surface: #181818;
-            --surface-light: #242424;
-            --primary: #ffffff;
-            --text-muted: #888888;
-            --border: #333333;
-            --accent: #2563eb;
-            --success: #16a34a;
-            --danger: #dc2626;
-        }
+        :root { --bg: #0d0d0d; --surface: #181818; --surface-light: #242424; --primary: #ffffff; --text-muted: #888888; --border: #333333; --accent: #2563eb; --success: #16a34a; --danger: #dc2626; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--bg); color: var(--primary); min-height: 100vh; display: flex; flex-direction: column; }
         
-        #auth-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 20px;
-        }
-        .auth-card {
-            background: var(--surface); border: 2px solid var(--border); padding: 30px;
-            border-radius: 8px; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-        }
+        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
+        .auth-card { background: var(--surface); border: 2px solid var(--border); padding: 30px; border-radius: 8px; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
         .auth-card h2 { margin-bottom: 20px; font-weight: 700; letter-spacing: 1px; text-transform: lowercase; }
         .auth-form { display: flex; flex-direction: column; gap: 15px; text-align: left; }
-        .auth-form input {
-            background: var(--bg); border: 1px solid var(--border); padding: 12px; color: #fff; border-radius: 4px; width: 100%; font-size: 1rem;
-        }
+        .auth-form input { background: var(--bg); border: 1px solid var(--border); padding: 12px; color: #fff; border-radius: 4px; width: 100%; font-size: 1rem; }
         .auth-form input:focus { outline: none; border-color: var(--accent); }
-        .auth-form button {
-            background: var(--accent); color: #fff; border: none; padding: 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: background 0.2s;
-        }
-        .auth-form button:hover { background: #1d4ed8; }
-
-        header {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 15px 20px; border-bottom: 1px solid var(--border); background: var(--surface);
-            flex-wrap: wrap; gap: 15px;
-        }
+        .auth-form button { background: var(--accent); color: #fff; border: none; padding: 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: background 0.2s; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap: wrap; gap: 15px; }
         .brand { font-weight: 800; font-size: 1.5rem; letter-spacing: 2px; text-transform: lowercase; cursor: pointer; }
         nav { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
         nav a { color: var(--text-muted); text-decoration: none; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: color 0.2s; text-transform: uppercase; letter-spacing: 1px; }
         nav a:hover, nav a.active-link { color: var(--primary); }
-
-        @media (min-width: 600px) {
-            header { padding: 15px 30px; }
-            nav { gap: 20px; }
-        }
+        @media (min-width: 600px) { header { padding: 15px 30px; } nav { gap: 20px; } }
 
         main { flex: 1; padding: 20px; max-width: 1000px; margin: 0 auto; width: 100%; }
         @media (min-width: 600px) { main { padding: 40px; } }
-        
-        .view { display: none; }
-        .view.active { display: block; }
+        .view { display: none; } .view.active { display: block; }
 
         .store-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; margin-top: 20px; }
         .shirt-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; cursor: pointer; transition: transform 0.2s; position: relative; }
         .shirt-card:hover { transform: translateY(-3px); border-color: #555; }
         .shirt-img { width: 100%; height: 250px; object-fit: cover; background: #111; }
         .shirt-info { padding: 15px; text-align: center; font-weight: 600; font-size: 1.1rem; }
-        
         .stock-badge { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; border: 1px solid var(--border); }
         .out-of-stock { opacity: 0.5; pointer-events: none; }
         .delete-shirt-btn { position: absolute; top: 10px; left: 10px; background: var(--danger); color: #fff; border: none; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; z-index: 10; }
-        .delete-shirt-btn:hover { background: #991b1b; }
-
+        
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
         .modal-content { background: var(--surface); border: 1px solid var(--border); padding: 25px; border-radius: 8px; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; }
         .modal-close { float: right; background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; line-height: 1; }
-        .modal-close:hover { color: #fff; }
         
         .size-selector { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); color: #fff; margin: 15px 0; border-radius: 4px; font-size: 1rem; }
         .btn-group { display: flex; gap: 10px; margin-top: 20px; }
-        .btn-cart { flex: 1; background: var(--surface-light); border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-buy { flex: 1; background: var(--success); border: none; color: #fff; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-buy:hover { background: #15803d; }
+        .btn-cart, .btn-buy { flex: 1; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; color: #fff; border: none; }
+        .btn-cart { background: var(--surface-light); border: 1px solid var(--border); } .btn-buy { background: var(--success); }
         
         .cart-item { display: flex; justify-content: space-between; align-items: center; background: var(--surface); padding: 15px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
-        
         .checkout-box { background: var(--surface); border: 1px solid var(--border); padding: 25px; border-radius: 8px; max-width: 500px; width: 100%; margin: 0 auto; }
         .checkout-box input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: #fff; padding: 12px; margin-bottom: 15px; border-radius: 4px; }
         .card-row { display: flex; gap: 15px; }
         
         .owner-panel { background: #1a1a1a; border: 1px dashed var(--accent); padding: 20px; border-radius: 8px; margin-bottom: 30px; }
         .owner-panel input, .owner-panel select { width: 100%; background: var(--bg); border: 1px solid var(--border); color: #fff; padding: 10px; margin-bottom: 10px; border-radius: 4px; }
-        
         .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
-        .admin-col-2 { border-top: 1px solid var(--border); padding-top: 20px; }
-        @media (min-width: 600px) { .admin-col-2 { border-top: none; border-left: 1px solid var(--border); padding-top: 0; padding-left: 20px; } }
         
         .box { background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: 8px; line-height: 1.6; }
-        @media (min-width: 600px) { .box { padding: 30px; } }
-        
         .code-item, .user-item { display: flex; justify-content: space-between; background: var(--bg); padding: 10px; border: 1px solid var(--border); margin-bottom: 5px; border-radius: 4px; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .tos-text p { margin-bottom: 15px; color: var(--text-muted); }
-
         .profile-layout { display:flex; gap:20px; align-items:center; flex-wrap: wrap; justify-content: center; text-align: center; }
-        @media (min-width: 600px) { .profile-layout { justify-content: flex-start; text-align: left; } }
     </style>
 </head>
 <body>
@@ -134,22 +89,19 @@
     <main>
         <!-- Store View -->
         <div id="view-store" class="view active">
-            <!-- Developer Area -->
             <div id="owner-panel" class="owner-panel" style="display:none;">
-                <h3 style="margin-bottom:15px; color:var(--accent);">Developer Area (Local PC Mode)</h3>
-                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:15px;">Note: Since you are not using a database, adding shirts here only saves them to your local PC. To publish them globally to GitHub, update the "storeShirts" code in your HTML file directly.</p>
+                <h3 style="margin-bottom:15px; color:var(--accent);">Developer Area (Cloud Sync Mode)</h3>
                 <div class="admin-grid">
                     <div>
-                        <h4 style="margin-bottom:10px;">Test Add Shirt</h4>
+                        <h4 style="margin-bottom:10px;">Add New Shirt</h4>
                         <input type="text" id="shirt-name" placeholder="Shirt Name">
                         <input type="number" id="shirt-price" placeholder="Price (e.g. 25)" value="25">
                         <input type="number" id="shirt-stock" placeholder="Initial Stock Quantity" value="50">
-                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Image: Upload OR Paste URL</p>
-                        <input type="file" id="shirt-file" accept="image/*" onchange="handleImageUpload(event)" style="padding:6px;">
-                        <input type="text" id="shirt-img-url" placeholder="Or Image URL (https://...)">
-                        <button type="button" onclick="addShirt()" style="width:100%; padding:10px; background:var(--accent); color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Publish Locally</button>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Image URL (Use Discord Link)</p>
+                        <input type="text" id="shirt-img-url" placeholder="Image URL (https://...)">
+                        <button type="button" onclick="addShirt()" style="width:100%; padding:10px; background:var(--accent); color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Publish Live to Cloud</button>
                     </div>
-                    <div class="admin-col-2">
+                    <div>
                         <h4 style="margin-bottom:10px;">Manage Promo Codes</h4>
                         <div style="display:flex; gap:10px;">
                             <input type="text" id="new-code-name" placeholder="Code (e.g. SUMMER20)">
@@ -166,7 +118,7 @@
                 </div>
             </div>
             
-            <div id="store-listings" class="store-grid"></div>
+            <div id="store-listings" class="store-grid">Loading live store...</div>
         </div>
 
         <!-- Cart View -->
@@ -183,7 +135,6 @@
         <div id="view-checkout" class="view">
             <div class="checkout-box">
                 <h2 style="margin-bottom: 20px; text-align:center;">Secure Checkout</h2>
-                
                 <input type="text" id="cc-name" placeholder="Name on Card">
                 <input type="text" id="cc-num" placeholder="Card Number (0000 0000 0000 0000)" maxlength="19">
                 <div class="card-row">
@@ -196,7 +147,6 @@
                     <button onclick="applyPromo()" style="width:100%; padding:10px; background:var(--surface-light); color:#fff; border:1px solid var(--border); border-radius:4px; cursor:pointer; margin-bottom:15px;">Apply Code</button>
                 </div>
 
-                <!-- Checkout TOS Checkbox -->
                 <div style="background:var(--bg); padding:15px; border-radius:4px; border:1px solid var(--border); margin-bottom:20px; font-size:0.9rem;">
                     <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
                         <input type="checkbox" id="tos-checkbox" style="width:auto; margin:0;">
@@ -208,7 +158,6 @@
                     <span>Total to Pay:</span>
                     <span>$<span id="checkout-total">0.00</span></span>
                 </div>
-
                 <button onclick="processPayment()" class="btn-buy" style="width:100%;">Pay Now</button>
             </div>
         </div>
@@ -235,12 +184,12 @@
             </div>
         </div>
 
-        <!-- Terms of Service View (Main Tab) -->
+        <!-- Terms of Service View -->
         <div id="view-tos" class="view">
             <h2>Terms of Service</h2>
-            <div class="box tos-text" style="margin-top: 20px;">
-                <p>Our refund policy is as follows: We will exchange the defective item within 90 days of purchase. Defects include all decals. We want you happy.</p>
-                <p>And please contact tomboytuff1@gmail.com, add a image of the shirt, and add your phone number and we'll get to you as soon as possible.</p>
+            <div class="box" style="margin-top: 20px;">
+                <p style="color:var(--text-muted); margin-bottom:15px;">Our refund policy is as follows: We will exchange the defective item within 90 days of purchase. Defects include all decals. We want you happy.</p>
+                <p style="color:var(--text-muted);">And please contact tomboytuff1@gmail.com, add a image of the shirt, and add your phone number and we'll get to you as soon as possible.</p>
             </div>
         </div>
     </main>
@@ -253,16 +202,11 @@
             <p id="modal-shirt-stock-display" style="color:var(--success); font-size:0.85rem; margin-bottom:15px;">In Stock</p>
             <img id="modal-shirt-img" src="" style="width:100%; height:250px; object-fit:cover; border-radius:4px; background:#111; margin-bottom:15px;">
             <p style="font-size:1.2rem; font-weight:bold; margin-bottom:10px;">$<span id="modal-shirt-price">0.00</span></p>
-            
             <label style="color:var(--text-muted); font-size:0.9rem;">Select Size:</label>
             <select id="size-select" class="size-selector">
-                <option value="Small">Small</option>
-                <option value="Medium">Medium</option>
-                <option value="Large">Large</option>
-                <option value="XL">XL</option>
-                <option value="XXL">XXL</option> <!-- XXL Added Here -->
+                <option value="Small">Small</option><option value="Medium">Medium</option>
+                <option value="Large">Large</option><option value="XL">XL</option><option value="XXL">XXL</option>
             </select>
-
             <div class="btn-group">
                 <button class="btn-cart" onclick="addToCartFromModal()">Add to Cart</button>
                 <button class="btn-buy" onclick="buyNowFromModal()">Buy Now</button>
@@ -273,7 +217,7 @@
     <!-- Confirm Buy Modal -->
     <div id="confirm-modal" class="modal-overlay" style="z-index: 3000;">
         <div class="modal-content" style="text-align: center;">
-            <h3 id="confirm-msg" style="margin-bottom: 25px; line-height: 1.5;">Are you sure you want to buy the shirt name and then the size?</h3>
+            <h3 id="confirm-msg" style="margin-bottom: 25px; line-height: 1.5;">Are you sure?</h3>
             <div class="btn-group">
                 <button class="btn-cart" onclick="closeConfirm(false)">No</button>
                 <button class="btn-buy" onclick="closeConfirm(true)">Yes</button>
@@ -281,7 +225,7 @@
         </div>
     </div>
 
-    <!-- Checkout TOS Modal Popup -->
+    <!-- Checkout TOS Modal -->
     <div id="checkout-tos-modal" class="modal-overlay" style="z-index: 3000;">
         <div class="modal-content">
             <button class="modal-close" onclick="closeModal('checkout-tos-modal')">&times;</button>
@@ -294,19 +238,19 @@
         </div>
     </div>
 
-    <!-- CORE LOGIC SCRIPT (NO FIREBASE) -->
     <script>
-        // Database Variables (Local Storage Only)
+        // -------------------------------------------------------------------------
+        // JSONBIN CLOUD CONFIGURATION (Integrated with your Bin ID and Master Key)
+        // -------------------------------------------------------------------------
+        const JSONBIN_BIN_ID = "6aa6f95fac6210605ac8c5a3";
+        const JSONBIN_API_KEY = "$2a$10$t9K24qCSTHhgE4StsUP23u2w8/NdDVXi9tM9ZPHGdHPfjHcvONi7u";
+
         let users = JSON.parse(localStorage.getItem('tomboytuff_users')) || {};
         let currentUser = localStorage.getItem('tomboytuff_current_user');
         
-        // This acts as the store's inventory. 
-        let rawShirts = JSON.parse(localStorage.getItem('tomboytuff_shirts')) || [];
-        let storeShirts = typeof rawShirts[0] === 'string' ? [] : rawShirts; 
-        
+        let storeShirts = [];
         let promoCodes = JSON.parse(localStorage.getItem('tomboytuff_promos')) || { "TOMBOYTUFF": 10 };
         
-        let uploadedBase64 = "";
         let selectedShirtId = null;
         let checkoutTotal = 0;
         let activeDiscountPct = 0;
@@ -340,15 +284,17 @@
                 users[currentUser].avatar = DEFAULT_AVATAR;
                 localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             }
-
             document.getElementById('auth-overlay').style.display = 'none';
             loadProfile();
-            loadStore();
+            fetchCloudStore();
             updateCartUI();
             loadOrders();
             renderAdminCodes();
             renderAdminUsers();
             switchView('store');
+            
+            // Auto-refresh store every 5 seconds so updates appear live on all devices
+            setInterval(fetchCloudStore, 5000);
         }
 
         function signOut() {
@@ -356,11 +302,9 @@
             location.reload();
         }
 
-        /* --- Admin Profile --- */
         function loadProfile() {
-            const user = users[currentUser];
-            document.getElementById('prof-username').innerText = user.username;
-            document.getElementById('profile-avatar-img').src = user.avatar;
+            document.getElementById('prof-username').innerText = users[currentUser].username;
+            document.getElementById('profile-avatar-img').src = users[currentUser].avatar;
             document.getElementById('owner-panel').style.display = (currentUser === 'owner') ? 'block' : 'none';
         }
 
@@ -376,39 +320,56 @@
             reader.readAsDataURL(file);
         }
 
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) { uploadedBase64 = e.target.result; };
-            reader.readAsDataURL(file);
+        // FETCH DATA FROM JSONBIN CLOUD
+        function fetchCloudStore() {
+            if (JSONBIN_BIN_ID === "YOUR_BIN_ID_HERE") return;
+            
+            fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
+                headers: { 'X-Master-Key': JSONBIN_API_KEY }
+            })
+            .then(res => res.json())
+            .then(data => {
+                storeShirts = data.record.shirts || [];
+                if(document.getElementById('view-store').classList.contains('active')) {
+                    renderStoreUI();
+                }
+            })
+            .catch(err => console.log("Cloud sync error"));
+        }
+
+        // SAVE DATA TO JSONBIN CLOUD
+        function saveCloudStore() {
+            fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': JSONBIN_API_KEY
+                },
+                body: JSON.stringify({ shirts: storeShirts })
+            })
+            .then(() => fetchCloudStore())
+            .catch(err => alert("Error saving to cloud database."));
         }
 
         function addShirt() {
             const name = document.getElementById('shirt-name').value;
-            const urlInput = document.getElementById('shirt-img-url').value;
+            const img = document.getElementById('shirt-img-url').value || 'https://via.placeholder.com/300x300?text=No+Image';
             const price = parseFloat(document.getElementById('shirt-price').value) || 25.00;
             const stock = parseInt(document.getElementById('shirt-stock').value) || 0;
             if(!name) return alert("Shirt Name is required");
             
-            const finalImg = uploadedBase64 || urlInput || 'https://via.placeholder.com/300x300?text=No+Image';
-            
-            storeShirts.push({ id: Date.now(), name: name, img: finalImg, price: price, stock: stock });
-            localStorage.setItem('tomboytuff_shirts', JSON.stringify(storeShirts));
+            storeShirts.push({ id: Date.now(), name, img, price, stock });
+            saveCloudStore();
             
             document.getElementById('shirt-name').value = '';
             document.getElementById('shirt-img-url').value = '';
-            document.getElementById('shirt-file').value = '';
-            uploadedBase64 = "";
-            loadStore();
         }
 
         function deleteShirt(event, id) {
-            event.stopPropagation(); 
-            if(confirm("Are you sure you want to delete this shirt from the store?")) {
+            event.stopPropagation();
+            if(confirm("Delete this shirt globally?")) {
                 storeShirts = storeShirts.filter(s => s.id !== id);
-                localStorage.setItem('tomboytuff_shirts', JSON.stringify(storeShirts));
-                loadStore(); 
+                saveCloudStore();
             }
         }
 
@@ -450,14 +411,8 @@
             const list = document.getElementById('admin-users-list');
             const searchInput = document.getElementById('user-search-input');
             const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
-            
             let allUsers = Object.keys(users).filter(u => u !== 'owner');
-            
-            // Filters based on search bar
-            if (searchTerm) {
-                allUsers = allUsers.filter(u => u.toLowerCase().includes(searchTerm));
-            }
-            
+            if (searchTerm) allUsers = allUsers.filter(u => u.toLowerCase().includes(searchTerm));
             if(allUsers.length === 0) return list.innerHTML = "<p style='color:var(--text-muted); font-size:0.9rem;'>No matching users found.</p>";
             list.innerHTML = allUsers.map(u => `
                 <div class="user-item">
@@ -467,8 +422,7 @@
             `).join('');
         }
 
-        /* --- Store Rendering --- */
-        function loadStore() {
+        function renderStoreUI() {
             const grid = document.getElementById('store-listings');
             if (storeShirts.length === 0) return grid.innerHTML = '<p style="color:var(--text-muted); grid-column: 1/-1;">No shirts published yet.</p>';
             
@@ -595,9 +549,9 @@
             let webhookContent = `**🛒 New Purchase from TOMBOYTUFF**\n**User:** ${currentUser}\n**Total Paid:** $${document.getElementById('checkout-total').innerText}\n**Items:**\n`;
             
             cart.forEach(item => {
-                let globalShirtIndex = storeShirts.findIndex(s => s.id === item.id);
-                if(globalShirtIndex > -1 && storeShirts[globalShirtIndex].stock > 0) {
-                    storeShirts[globalShirtIndex].stock -= 1;
+                let liveShirt = storeShirts.find(s => s.id === item.id);
+                if(liveShirt && liveShirt.stock > 0) {
+                    liveShirt.stock -= 1;
                 }
                 
                 let finalPrice = activeDiscountPct > 0 ? item.price - (item.price * (activeDiscountPct / 100)) : item.price;
@@ -605,6 +559,9 @@
                 webhookContent += `- ${item.name} (Size: ${item.size})\n`;
             });
             
+            // Save updated stock to the cloud bin
+            saveCloudStore();
+
             let currentAvatar = users[currentUser].avatar;
             if (!currentAvatar.startsWith('http') && !currentAvatar.startsWith('data:')) {
                 currentAvatar = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1) + currentAvatar;
@@ -613,7 +570,6 @@
             let payload = { content: webhookContent, username: currentUser };
             if (!currentAvatar.startsWith('data:')) payload.avatar_url = currentAvatar;
             
-            localStorage.setItem('tomboytuff_shirts', JSON.stringify(storeShirts));
             users[currentUser].cart = [];
             localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             
@@ -621,7 +577,6 @@
             
             updateCartUI(); 
             loadOrders(); 
-            loadStore(); 
             
             document.getElementById('cc-name').value = ''; 
             document.getElementById('cc-num').value = '';
