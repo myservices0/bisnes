@@ -20,7 +20,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--bg); color: var(--primary); min-height: 100vh; display: flex; flex-direction: column; }
         
-        /* Auth Overlay */
         #auth-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95); display: flex; align-items: center; justify-content: center; z-index: 2000;
@@ -40,7 +39,6 @@
         }
         .auth-form button:hover { background: #1d4ed8; }
 
-        /* App Layout */
         header {
             display: flex; justify-content: space-between; align-items: center;
             padding: 15px 30px; border-bottom: 1px solid var(--border); background: var(--surface);
@@ -54,14 +52,14 @@
         .view { display: none; }
         .view.active { display: block; }
 
-        /* Store Grid */
         .store-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
-        .shirt-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; cursor: pointer; transition: transform 0.2s; }
+        .shirt-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; cursor: pointer; transition: transform 0.2s; position: relative; }
         .shirt-card:hover { transform: translateY(-3px); border-color: #555; }
         .shirt-img { width: 100%; height: 250px; object-fit: cover; background: #111; }
         .shirt-info { padding: 15px; text-align: center; font-weight: 600; font-size: 1.1rem; }
+        .stock-badge { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; border: 1px solid var(--border); }
+        .out-of-stock { opacity: 0.5; pointer-events: none; }
 
-        /* Modals (Product details & Confirmation) */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; }
         .modal-content { background: var(--surface); border: 1px solid var(--border); padding: 30px; border-radius: 8px; width: 400px; max-width: 90%; }
         .modal-close { float: right; background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
@@ -73,18 +71,17 @@
         .btn-buy { flex: 1; background: var(--success); border: none; color: #fff; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .btn-buy:hover { background: #15803d; }
         
-        /* Cart & Checkout */
         .cart-item { display: flex; justify-content: space-between; align-items: center; background: var(--surface); padding: 15px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; }
         .checkout-box { background: var(--surface); border: 1px solid var(--border); padding: 25px; border-radius: 8px; max-width: 500px; margin: 0 auto; }
         .checkout-box input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: #fff; padding: 12px; margin-bottom: 15px; border-radius: 4px; }
         .card-row { display: flex; gap: 15px; }
         
-        /* Owner Panel */
         .owner-panel { background: #1a1a1a; border: 1px dashed var(--accent); padding: 20px; border-radius: 8px; margin-bottom: 30px; }
-        .owner-panel input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: #fff; padding: 10px; margin-bottom: 10px; border-radius: 4px; }
+        .owner-panel input, .owner-panel select { width: 100%; background: var(--bg); border: 1px solid var(--border); color: #fff; padding: 10px; margin-bottom: 10px; border-radius: 4px; }
+        .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         
-        /* General boxes */
         .box { background: var(--surface); border: 1px solid var(--border); padding: 30px; border-radius: 8px; line-height: 1.6; }
+        .code-item { display: flex; justify-content: space-between; background: var(--bg); padding: 10px; border: 1px solid var(--border); margin-bottom: 5px; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -98,7 +95,6 @@
                 <input type="password" id="input-password" placeholder="Password" autocomplete="off" required>
                 <button type="button" onclick="submitAuth()">Enter Website</button>
             </div>
-            <p style="margin-top:15px; font-size:0.8rem; color:var(--text-muted);">If the username doesn't exist, an account will be created automatically.</p>
         </div>
     </div>
 
@@ -109,9 +105,7 @@
             <a onclick="switchView('store')" id="nav-store">Store</a>
             <a onclick="switchView('cart')" id="nav-cart">Cart (<span id="cart-count">0</span>)</a>
             <a onclick="switchView('orders')" id="nav-orders">Orders</a>
-            <a onclick="switchView('codes')" id="nav-codes">Codes</a>
             <a onclick="switchView('profile')" id="nav-profile">Profile</a>
-            <a href="https://myservices0.github.io/bis-terms/" target="_blank">T.O.S</a>
         </nav>
     </header>
 
@@ -119,11 +113,28 @@
         <!-- Store View -->
         <div id="view-store" class="view active">
             <div id="owner-panel" class="owner-panel" style="display:none;">
-                <h3 style="margin-bottom:15px; color:var(--accent);">Developer Area: Add Shirt</h3>
-                <input type="text" id="shirt-name" placeholder="Shirt Name (e.g. Black Logo Tee)">
-                <input type="text" id="shirt-img" placeholder="Image URL (e.g. https://link-to-image.png)">
-                <input type="number" id="shirt-price" placeholder="Price (e.g. 25)" value="25">
-                <button type="button" onclick="addShirt()" style="padding:10px 20px; background:var(--accent); color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Publish to Store</button>
+                <h3 style="margin-bottom:15px; color:var(--accent);">Developer Area</h3>
+                <div class="admin-grid">
+                    <div>
+                        <h4 style="margin-bottom:10px;">Add New Shirt</h4>
+                        <input type="text" id="shirt-name" placeholder="Shirt Name">
+                        <input type="number" id="shirt-price" placeholder="Price (e.g. 25)" value="25">
+                        <input type="number" id="shirt-stock" placeholder="Initial Stock Quantity" value="50">
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Image: Upload OR Paste URL</p>
+                        <input type="file" id="shirt-file" accept="image/*" onchange="handleImageUpload(event)" style="padding:6px;">
+                        <input type="text" id="shirt-img-url" placeholder="Or Image URL (https://...)">
+                        <button type="button" onclick="addShirt()" style="width:100%; padding:10px; background:var(--accent); color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Publish to Store</button>
+                    </div>
+                    <div style="border-left: 1px solid var(--border); padding-left: 20px;">
+                        <h4 style="margin-bottom:10px;">Manage Promo Codes</h4>
+                        <div style="display:flex; gap:10px;">
+                            <input type="text" id="new-code-name" placeholder="Code (e.g. SUMMER20)">
+                            <input type="number" id="new-code-pct" placeholder="% Off (e.g. 10)" style="width:80px;">
+                        </div>
+                        <button type="button" onclick="addPromoCode()" style="width:100%; padding:8px; background:var(--surface-light); color:#fff; border:1px solid var(--border); border-radius:4px; cursor:pointer; margin-bottom:15px;">Add Code</button>
+                        <div id="admin-codes-list" style="max-height: 150px; overflow-y: auto;"></div>
+                    </div>
+                </div>
             </div>
             <div id="store-listings" class="store-grid"></div>
         </div>
@@ -142,7 +153,6 @@
         <div id="view-checkout" class="view">
             <div class="checkout-box">
                 <h2 style="margin-bottom: 20px; text-align:center;">Secure Checkout</h2>
-                <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:20px; text-align:center;">Pay securely with Visa, Mastercard, or Debit. Funds process directly to TomboyTuff.</p>
                 
                 <input type="text" id="cc-name" placeholder="Name on Card">
                 <input type="text" id="cc-num" placeholder="Card Number (0000 0000 0000 0000)" maxlength="19">
@@ -152,8 +162,16 @@
                 </div>
                 
                 <div style="border-top:1px solid var(--border); margin:20px 0; padding-top:20px;">
-                    <input type="text" id="promo-code" placeholder="Promo/Discount Code (Optional)">
+                    <input type="text" id="promo-code" placeholder="Enter Promo Code">
                     <button onclick="applyPromo()" style="width:100%; padding:10px; background:var(--surface-light); color:#fff; border:1px solid var(--border); border-radius:4px; cursor:pointer; margin-bottom:15px;">Apply Code</button>
+                </div>
+
+                <!-- Terms of Service Agreement -->
+                <div style="background:var(--bg); padding:15px; border-radius:4px; border:1px solid var(--border); margin-bottom:20px; font-size:0.9rem;">
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                        <input type="checkbox" id="tos-checkbox" style="width:auto; margin:0;">
+                        <span>I agree to the <a href="https://myservices0.github.io/bis-terms/" target="_blank" style="color:var(--accent);">Terms of Service</a> (Refunds only for ripped labels).</span>
+                    </label>
                 </div>
 
                 <div style="display:flex; justify-content:space-between; font-size:1.2rem; font-weight:bold; margin-bottom:20px;">
@@ -171,14 +189,6 @@
             <div id="user-orders-list" style="margin-top: 20px;"></div>
         </div>
 
-        <!-- Codes View -->
-        <div id="view-codes" class="view">
-            <h2>Active Codes</h2>
-            <div class="box" style="margin-top: 20px;">
-                <p style="color: var(--text-muted);">Follow our socials for exclusive drop codes!</p>
-            </div>
-        </div>
-
         <!-- Profile View -->
         <div id="view-profile" class="view">
             <h2>User Profile</h2>
@@ -186,7 +196,6 @@
                 <img id="profile-avatar-img" src="https://via.placeholder.com/80" alt="Avatar" style="width:80px; height:80px; border-radius:50%; object-fit:cover; border:2px solid var(--border);">
                 <div>
                     <p style="color:var(--text-muted); margin-bottom:5px;">Username: <span id="prof-username" style="color:#fff; font-weight:bold;"></span></p>
-                    <p style="color:var(--text-muted); margin-bottom:10px;">Password: <span id="prof-password" style="color:#fff;"></span></p>
                     <button type="button" onclick="changeAvatar()" style="background:var(--surface-light); color:#fff; border:1px solid var(--border); padding:6px 12px; border-radius:4px; cursor:pointer;">Change Icon</button>
                     <button type="button" onclick="signOut()" style="background:var(--danger); color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; margin-left:10px;">Sign Out</button>
                 </div>
@@ -198,7 +207,8 @@
     <div id="product-modal" class="modal-overlay">
         <div class="modal-content">
             <button class="modal-close" onclick="closeModal('product-modal')">&times;</button>
-            <h2 id="modal-shirt-name" style="margin-bottom:15px;">Shirt Name</h2>
+            <h2 id="modal-shirt-name" style="margin-bottom:5px;">Shirt Name</h2>
+            <p id="modal-shirt-stock-display" style="color:var(--success); font-size:0.85rem; margin-bottom:15px;">In Stock</p>
             <img id="modal-shirt-img" src="" style="width:100%; height:250px; object-fit:cover; border-radius:4px; background:#111; margin-bottom:15px;">
             <p style="font-size:1.2rem; font-weight:bold; margin-bottom:10px;">$<span id="modal-shirt-price">0.00</span></p>
             
@@ -229,41 +239,36 @@
     </div>
 
     <script>
-        // Database simulation
+        // Database & State
         let users = JSON.parse(localStorage.getItem('tomboytuff_users')) || {};
         let currentUser = localStorage.getItem('tomboytuff_current_user');
         
-        // Ensure old string arrays convert to objects gracefully, or start fresh
         let rawShirts = JSON.parse(localStorage.getItem('tomboytuff_shirts')) || [];
         let storeShirts = typeof rawShirts[0] === 'string' ? [] : rawShirts; 
         
-        // Runtime variables
+        // Promo Codes logic
+        let promoCodes = JSON.parse(localStorage.getItem('tomboytuff_promos')) || { "TOMBOYTUFF": 10 };
+        
+        let uploadedBase64 = "";
         let selectedShirtId = null;
         let checkoutTotal = 0;
-        let isPromoApplied = false;
-        let confirmAction = null; // callback for custom confirm dialog
+        let activeDiscountPct = 0;
+        let confirmAction = null; 
+
+        // Discord Webhook
+        const WEBHOOK_URL = "https://discord.com/api/webhooks/1548750256668151861/ude5SVe4tcsfMHaTBI9tA8PHhw47qwIcMFdeTNfZrUAbBIMe91AsSC1wmCrf5wvJMms2";
 
         function submitAuth() {
             const username = document.getElementById('input-username').value.trim();
             const password = document.getElementById('input-password').value.trim();
-
             if (!username || !password) return alert("Please fill in both fields.");
 
-            // Owner Login
             if (username === 'owner' && password === 'imtheowner') {
                 currentUser = 'owner';
-                if (!users['owner']) {
-                    users['owner'] = { username: 'owner', password: 'imtheowner', avatar: 'https://via.placeholder.com/80', orders: [], cart: [] };
-                }
+                if (!users['owner']) users['owner'] = { username: 'owner', password: 'imtheowner', avatar: 'https://via.placeholder.com/80', orders: [], cart: [] };
             } else {
-                // Check existing
-                if (users[username] && users[username].password !== password) {
-                    return alert("Incorrect password or username already taken.");
-                }
-                // Create new
-                if (!users[username]) {
-                    users[username] = { username, password, avatar: 'https://via.placeholder.com/80', orders: [], cart: [] };
-                }
+                if (users[username] && users[username].password !== password) return alert("Incorrect password or username taken.");
+                if (!users[username]) users[username] = { username, password, avatar: 'https://via.placeholder.com/80', orders: [], cart: [] };
                 currentUser = username;
             }
 
@@ -273,12 +278,13 @@
         }
 
         function initializeApp() {
-            if(!users[currentUser].cart) users[currentUser].cart = []; // patch old accounts
+            if(!users[currentUser].cart) users[currentUser].cart = [];
             document.getElementById('auth-overlay').style.display = 'none';
             loadProfile();
             loadStore();
             updateCartUI();
             loadOrders();
+            renderAdminCodes();
             switchView('store');
         }
 
@@ -287,13 +293,11 @@
             location.reload();
         }
 
-        /* --- Developer / Owner Functions --- */
+        /* --- Owner Admin Functions --- */
         function loadProfile() {
             const user = users[currentUser];
             document.getElementById('prof-username').innerText = user.username;
-            document.getElementById('prof-password').innerText = user.password;
             document.getElementById('profile-avatar-img').src = user.avatar;
-
             document.getElementById('owner-panel').style.display = (currentUser === 'owner') ? 'block' : 'none';
         }
 
@@ -301,52 +305,100 @@
             const newUrl = prompt("Enter new image URL:");
             if (newUrl) {
                 users[currentUser].avatar = newUrl;
-                saveUsers();
+                localStorage.setItem('tomboytuff_users', JSON.stringify(users));
                 loadProfile();
             }
         }
 
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) { uploadedBase64 = e.target.result; };
+            reader.readAsDataURL(file);
+        }
+
         function addShirt() {
             const name = document.getElementById('shirt-name').value;
-            const img = document.getElementById('shirt-img').value || 'https://via.placeholder.com/300x300?text=No+Image';
+            const urlInput = document.getElementById('shirt-img-url').value;
             const price = parseFloat(document.getElementById('shirt-price').value) || 25.00;
+            const stock = parseInt(document.getElementById('shirt-stock').value) || 0;
             
             if(!name) return alert("Shirt Name is required");
             
-            storeShirts.push({ id: Date.now(), name, img, price });
+            const finalImg = uploadedBase64 || urlInput || 'https://via.placeholder.com/300x300?text=No+Image';
+            
+            storeShirts.push({ id: Date.now(), name, img: finalImg, price, stock });
             localStorage.setItem('tomboytuff_shirts', JSON.stringify(storeShirts));
             
             document.getElementById('shirt-name').value = '';
-            document.getElementById('shirt-img').value = '';
-            document.getElementById('shirt-price').value = '25';
+            document.getElementById('shirt-img-url').value = '';
+            document.getElementById('shirt-file').value = '';
+            uploadedBase64 = "";
             loadStore();
         }
 
-        /* --- Store & Product Flow --- */
+        function addPromoCode() {
+            const code = document.getElementById('new-code-name').value.trim().toUpperCase();
+            const pct = parseInt(document.getElementById('new-code-pct').value);
+            if(!code || isNaN(pct)) return alert("Enter valid code and percentage.");
+            
+            promoCodes[code] = pct;
+            localStorage.setItem('tomboytuff_promos', JSON.stringify(promoCodes));
+            document.getElementById('new-code-name').value = '';
+            document.getElementById('new-code-pct').value = '';
+            renderAdminCodes();
+        }
+
+        function deletePromoCode(code) {
+            delete promoCodes[code];
+            localStorage.setItem('tomboytuff_promos', JSON.stringify(promoCodes));
+            renderAdminCodes();
+        }
+
+        function renderAdminCodes() {
+            const list = document.getElementById('admin-codes-list');
+            if(Object.keys(promoCodes).length === 0) {
+                list.innerHTML = "<p style='color:var(--text-muted); font-size:0.9rem;'>No active codes.</p>";
+                return;
+            }
+            list.innerHTML = Object.keys(promoCodes).map(code => `
+                <div class="code-item">
+                    <span><strong>${code}</strong> (${promoCodes[code]}% OFF)</span>
+                    <button onclick="deletePromoCode('${code}')" style="background:none; border:none; color:var(--danger); cursor:pointer;">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        /* --- Store UI --- */
         function loadStore() {
             const grid = document.getElementById('store-listings');
             if (storeShirts.length === 0) {
                 grid.innerHTML = '<p style="color:var(--text-muted); grid-column: 1/-1;">No shirts published yet.</p>';
                 return;
             }
-            grid.innerHTML = storeShirts.map(s => `
-                <div class="shirt-card" onclick="openProduct(${s.id})">
+            grid.innerHTML = storeShirts.map(s => {
+                const outOfStock = s.stock <= 0;
+                return `
+                <div class="shirt-card ${outOfStock ? 'out-of-stock' : ''}" onclick="openProduct(${s.id})">
+                    <div class="stock-badge">${outOfStock ? 'SOLD OUT' : s.stock + ' Left'}</div>
                     <img class="shirt-img" src="${s.img}" alt="${s.name}">
                     <div class="shirt-info">
                         <div>${s.name}</div>
                         <div style="color:var(--text-muted); font-size:0.9rem; margin-top:5px;">$${s.price.toFixed(2)}</div>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         }
 
         function openProduct(id) {
             const shirt = storeShirts.find(s => s.id === id);
-            if(!shirt) return;
+            if(!shirt || shirt.stock <= 0) return;
             selectedShirtId = id;
             document.getElementById('modal-shirt-name').innerText = shirt.name;
             document.getElementById('modal-shirt-img').src = shirt.img;
             document.getElementById('modal-shirt-price').innerText = shirt.price.toFixed(2);
+            document.getElementById('modal-shirt-stock-display').innerText = `${shirt.stock} Left In Stock`;
             document.getElementById('product-modal').style.display = 'flex';
         }
 
@@ -354,42 +406,44 @@
             document.getElementById(id).style.display = 'none';
         }
 
-        /* --- Cart Logic --- */
+        /* --- Cart & Purchasing --- */
         function addToCartFromModal() {
             const shirt = storeShirts.find(s => s.id === selectedShirtId);
             const size = document.getElementById('size-select').value;
             users[currentUser].cart.push({ ...shirt, size, cartId: Date.now() });
-            saveUsers();
+            localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             updateCartUI();
             closeModal('product-modal');
             alert(shirt.name + " (" + size + ") added to cart!");
         }
 
         function buyNowFromModal() {
-            // Add to cart behind the scenes, then prompt
             const shirt = storeShirts.find(s => s.id === selectedShirtId);
             const size = document.getElementById('size-select').value;
             
             users[currentUser].cart.push({ ...shirt, size, cartId: Date.now() });
-            saveUsers();
+            localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             updateCartUI();
             closeModal('product-modal');
 
-            // Trigger custom confirmation
-            promptConfirmation(shirt.name, size, () => {
-                // If YES
-                startCheckoutFromCart();
-            }, () => {
-                // If NO - stays in cart, switch to cart view
-                switchView('cart');
-            });
+            document.getElementById('confirm-msg').innerText = `Are you sure you want to buy the ${shirt.name} and then the ${size}?`;
+            document.getElementById('confirm-modal').style.display = 'flex';
+            confirmAction = { 
+                yes: () => { document.getElementById('confirm-modal').style.display = 'none'; startCheckoutFromCart(); }, 
+                no: () => { document.getElementById('confirm-modal').style.display = 'none'; switchView('cart'); }
+            };
+        }
+
+        function closeConfirm(isYes) {
+            if(isYes && confirmAction?.yes) confirmAction.yes();
+            if(!isYes && confirmAction?.no) confirmAction.no();
         }
 
         function updateCartUI() {
             const cart = users[currentUser].cart;
             document.getElementById('cart-count').innerText = cart.length;
-            
             const container = document.getElementById('cart-items');
+            
             if (cart.length === 0) {
                 container.innerHTML = '<p style="color:var(--text-muted);">Your cart is empty.</p>';
                 document.getElementById('cart-footer').style.display = 'none';
@@ -415,41 +469,31 @@
 
         function removeFromCart(cartId) {
             users[currentUser].cart = users[currentUser].cart.filter(c => c.cartId !== cartId);
-            saveUsers();
+            localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             updateCartUI();
         }
 
         /* --- Checkout Flow --- */
-        function promptConfirmation(name, size, onYes, onNo) {
-            document.getElementById('confirm-msg').innerText = `Are you sure you want to buy the ${name} and then the ${size}?`;
-            document.getElementById('confirm-modal').style.display = 'flex';
-            confirmAction = { yes: onYes, no: onNo };
-        }
-
-        function closeConfirm(isYes) {
-            document.getElementById('confirm-modal').style.display = 'none';
-            if(isYes && confirmAction?.yes) confirmAction.yes();
-            if(!isYes && confirmAction?.no) confirmAction.no();
-        }
-
         function startCheckoutFromCart() {
             const cart = users[currentUser].cart;
             if(cart.length === 0) return;
             
             checkoutTotal = cart.reduce((sum, item) => sum + item.price, 0);
-            isPromoApplied = false;
+            activeDiscountPct = 0;
             document.getElementById('promo-code').value = '';
+            document.getElementById('tos-checkbox').checked = false;
             updateCheckoutTotalDisplay();
             switchView('checkout');
         }
 
         function applyPromo() {
-            if(isPromoApplied) return;
-            const code = document.getElementById('promo-code').value;
-            if(code === 'TOMBOYTUFF') {
-                isPromoApplied = true;
+            const codeInput = document.getElementById('promo-code').value.trim().toUpperCase();
+            if(!codeInput) return;
+
+            if (promoCodes.hasOwnProperty(codeInput)) {
+                activeDiscountPct = promoCodes[codeInput];
                 updateCheckoutTotalDisplay();
-                alert("Promo code applied!");
+                alert(`You get ${activeDiscountPct}% off on ${codeInput}!`);
             } else {
                 alert("Invalid promo code.");
             }
@@ -457,37 +501,62 @@
 
         function updateCheckoutTotalDisplay() {
             let final = checkoutTotal;
-            if(isPromoApplied) final = final * 0.90; // 10% off
+            if(activeDiscountPct > 0) {
+                final = final - (final * (activeDiscountPct / 100));
+            }
             document.getElementById('checkout-total').innerText = final.toFixed(2);
         }
 
         function processPayment() {
             const cc = document.getElementById('cc-num').value;
             if(cc.length < 15) return alert("Please enter a valid card number.");
+            if(!document.getElementById('tos-checkbox').checked) return alert("You must agree to the Terms of Service to purchase.");
             
-            // Move cart to orders
             const cart = users[currentUser].cart;
+            let webhookContent = `**🛒 New Purchase from TOMBOYTUFF**\n**User:** ${currentUser}\n**Total Paid:** $${document.getElementById('checkout-total').innerText}\n**Items:**\n`;
+            
             cart.forEach(item => {
-                users[currentUser].orders.push(`${item.name} (Size: ${item.size}) - Paid: $${(isPromoApplied ? item.price * 0.9 : item.price).toFixed(2)}`);
+                // Update Inventory
+                let globalShirtIndex = storeShirts.findIndex(s => s.id === item.id);
+                if(globalShirtIndex > -1 && storeShirts[globalShirtIndex].stock > 0) {
+                    storeShirts[globalShirtIndex].stock -= 1;
+                }
+                
+                // Log Order internally
+                let finalPrice = activeDiscountPct > 0 ? item.price - (item.price * (activeDiscountPct / 100)) : item.price;
+                users[currentUser].orders.push(`${item.name} (Size: ${item.size}) - Paid: $${finalPrice.toFixed(2)}`);
+                
+                // Add to Webhook log
+                webhookContent += `- ${item.name} (Size: ${item.size})\n`;
             });
             
+            // Save inventory & clear user cart
+            localStorage.setItem('tomboytuff_shirts', JSON.stringify(storeShirts));
             users[currentUser].cart = [];
-            saveUsers();
+            localStorage.setItem('tomboytuff_users', JSON.stringify(users));
+            
+            // Send Discord Webhook
+            fetch(WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: webhookContent })
+            }).catch(e => console.error("Webhook Error:", e));
+            
+            // Cleanup UI
             updateCartUI();
             loadOrders();
+            loadStore(); // Re-render stock
             
-            alert("Payment Successful! Funds routed securely.");
-            
-            // Clear fields
             document.getElementById('cc-name').value = '';
             document.getElementById('cc-num').value = '';
             document.getElementById('cc-exp').value = '';
             document.getElementById('cc-cvc').value = '';
             
-            switchView('orders');
+            // Thank You prompt and redirect
+            alert("Thank you for purchasing from TOMBOYTUFF!");
+            switchView('store');
         }
 
-        /* --- Orders View --- */
         function loadOrders() {
             const user = users[currentUser];
             const list = document.getElementById('user-orders-list');
@@ -498,16 +567,10 @@
             list.innerHTML = user.orders.map(o => `<div class="box" style="margin-bottom:10px; padding:15px;">${o}</div>`).join('');
         }
 
-        /* --- Utility --- */
-        function saveUsers() {
-            localStorage.setItem('tomboytuff_users', JSON.stringify(users));
-        }
-
         function switchView(viewName) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById('view-' + viewName).classList.add('active');
             
-            // Update Nav Highlighting
             document.querySelectorAll('nav a').forEach(a => a.classList.remove('active-link'));
             const link = document.getElementById('nav-' + viewName);
             if(link) link.classList.add('active-link');
@@ -515,11 +578,8 @@
             window.scrollTo(0,0);
         }
 
-        // Boot
         window.onload = function() {
-            if (currentUser && users[currentUser]) {
-                initializeApp();
-            }
+            if (currentUser && users[currentUser]) initializeApp();
         }
     </script>
 </body>
