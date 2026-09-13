@@ -97,7 +97,9 @@
                         <input type="text" id="shirt-name" placeholder="Shirt Name">
                         <input type="number" id="shirt-price" placeholder="Price (e.g. 25)" value="25">
                         <input type="number" id="shirt-stock" placeholder="Initial Stock Quantity" value="50">
-                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Image URL (Use Discord Link)</p>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Select Image from PC Files:</p>
+                        <input type="file" id="shirt-file-input" accept="image/*" style="margin-bottom:10px; color:#fff;" onchange="previewLocalShirtFile(event)">
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Or Paste Image File Link / URL:</p>
                         <input type="text" id="shirt-img-url" placeholder="Image URL (https://...)">
                         <button type="button" onclick="addShirt()" style="width:100%; padding:10px; background:var(--accent); color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Publish Live to Cloud</button>
                     </div>
@@ -240,7 +242,7 @@
 
     <script>
         // -------------------------------------------------------------------------
-        // JSONBIN CLOUD CONFIGURATION (Integrated with your Bin ID and Master Key)
+        // JSONBIN CLOUD CONFIGURATION
         // -------------------------------------------------------------------------
         const JSONBIN_BIN_ID = "6aa6f95fac6210605ac8c5a3";
         const JSONBIN_API_KEY = "$2a$10$t9K24qCSTHhgE4StsUP23u2w8/NdDVXi9tM9ZPHGdHPfjHcvONi7u";
@@ -251,6 +253,7 @@
         let storeShirts = [];
         let promoCodes = JSON.parse(localStorage.getItem('tomboytuff_promos')) || { "TOMBOYTUFF": 10 };
         
+        let temporaryShirtImage = ""; // Holds file selection from PC
         let selectedShirtId = null;
         let checkoutTotal = 0;
         let activeDiscountPct = 0;
@@ -293,7 +296,6 @@
             renderAdminUsers();
             switchView('store');
             
-            // Auto-refresh store every 5 seconds so updates appear live on all devices
             setInterval(fetchCloudStore, 5000);
         }
 
@@ -316,6 +318,17 @@
                 users[currentUser].avatar = e.target.result;
                 localStorage.setItem('tomboytuff_users', JSON.stringify(users));
                 loadProfile();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Handle image selection from PC files
+        function previewLocalShirtFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                temporaryShirtImage = e.target.result;
             };
             reader.readAsDataURL(file);
         }
@@ -353,16 +366,22 @@
 
         function addShirt() {
             const name = document.getElementById('shirt-name').value;
-            const img = document.getElementById('shirt-img-url').value || 'https://via.placeholder.com/300x300?text=No+Image';
+            const urlInput = document.getElementById('shirt-img-url').value;
             const price = parseFloat(document.getElementById('shirt-price').value) || 25.00;
             const stock = parseInt(document.getElementById('shirt-stock').value) || 0;
+            
             if(!name) return alert("Shirt Name is required");
             
-            storeShirts.push({ id: Date.now(), name, img, price, stock });
+            // Prioritize PC file upload if selected, otherwise use link/URL, otherwise fallback placeholder
+            const finalImg = temporaryShirtImage || urlInput || 'https://via.placeholder.com/300x300?text=No+Image';
+            
+            storeShirts.push({ id: Date.now(), name, img: finalImg, price, stock });
             saveCloudStore();
             
             document.getElementById('shirt-name').value = '';
             document.getElementById('shirt-img-url').value = '';
+            document.getElementById('shirt-file-input').value = '';
+            temporaryShirtImage = "";
         }
 
         function deleteShirt(event, id) {
@@ -559,7 +578,6 @@
                 webhookContent += `- ${item.name} (Size: ${item.size})\n`;
             });
             
-            // Save updated stock to the cloud bin
             saveCloudStore();
 
             let currentAvatar = users[currentUser].avatar;
