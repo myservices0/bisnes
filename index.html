@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>tomboytuff</title>
     <style>
-        /* Mod Menu / Dark Theme Aesthetic */
+        /* Dark Theme Aesthetic */
         :root {
             --bg: #0d0d0d;
             --surface: #181818;
@@ -91,12 +91,9 @@
         .owner-panel { background: #1a1a1a; border: 1px dashed var(--accent); padding: 20px; border-radius: 8px; margin-bottom: 30px; }
         .owner-panel input, .owner-panel select { width: 100%; background: var(--bg); border: 1px solid var(--border); color: #fff; padding: 10px; margin-bottom: 10px; border-radius: 4px; }
         
-        /* Responsive Admin Grid */
         .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
         .admin-col-2 { border-top: 1px solid var(--border); padding-top: 20px; }
-        @media (min-width: 600px) {
-            .admin-col-2 { border-top: none; border-left: 1px solid var(--border); padding-top: 0; padding-left: 20px; }
-        }
+        @media (min-width: 600px) { .admin-col-2 { border-top: none; border-left: 1px solid var(--border); padding-top: 0; padding-left: 20px; } }
         
         .box { background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: 8px; line-height: 1.6; }
         @media (min-width: 600px) { .box { padding: 30px; } }
@@ -137,18 +134,20 @@
     <main>
         <!-- Store View -->
         <div id="view-store" class="view active">
+            <!-- Developer Area -->
             <div id="owner-panel" class="owner-panel" style="display:none;">
-                <h3 style="margin-bottom:15px; color:var(--accent);">Developer Area</h3>
+                <h3 style="margin-bottom:15px; color:var(--accent);">Developer Area (Local PC Mode)</h3>
+                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:15px;">Note: Since you are not using a database, adding shirts here only saves them to your local PC. To publish them globally to GitHub, update the "storeShirts" code in your HTML file directly.</p>
                 <div class="admin-grid">
                     <div>
-                        <h4 style="margin-bottom:10px;">Add New Shirt</h4>
+                        <h4 style="margin-bottom:10px;">Test Add Shirt</h4>
                         <input type="text" id="shirt-name" placeholder="Shirt Name">
                         <input type="number" id="shirt-price" placeholder="Price (e.g. 25)" value="25">
                         <input type="number" id="shirt-stock" placeholder="Initial Stock Quantity" value="50">
                         <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Image: Upload OR Paste URL</p>
                         <input type="file" id="shirt-file" accept="image/*" onchange="handleImageUpload(event)" style="padding:6px;">
                         <input type="text" id="shirt-img-url" placeholder="Or Image URL (https://...)">
-                        <button type="button" onclick="addShirt()" style="width:100%; padding:10px; background:var(--accent); color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Publish to Store</button>
+                        <button type="button" onclick="addShirt()" style="width:100%; padding:10px; background:var(--accent); color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Publish Locally</button>
                     </div>
                     <div class="admin-col-2">
                         <h4 style="margin-bottom:10px;">Manage Promo Codes</h4>
@@ -161,12 +160,12 @@
                     </div>
                 </div>
                 <div style="border-top: 1px solid var(--border); margin-top: 20px; padding-top: 20px;">
-                    <h4 style="margin-bottom:10px;">Manage Users (Ban/Unban)</h4>
-                    <!-- Search Bar Added Here -->
+                    <h4 style="margin-bottom:10px;">Manage Users (Search & Ban)</h4>
                     <input type="text" id="user-search-input" placeholder="Search usernames..." onkeyup="renderAdminUsers()" style="margin-bottom: 10px;">
                     <div id="admin-users-list" style="max-height: 150px; overflow-y: auto;"></div>
                 </div>
             </div>
+            
             <div id="store-listings" class="store-grid"></div>
         </div>
 
@@ -197,7 +196,7 @@
                     <button onclick="applyPromo()" style="width:100%; padding:10px; background:var(--surface-light); color:#fff; border:1px solid var(--border); border-radius:4px; cursor:pointer; margin-bottom:15px;">Apply Code</button>
                 </div>
 
-                <!-- Terms of Service Agreement within Checkout -->
+                <!-- Checkout TOS Checkbox -->
                 <div style="background:var(--bg); padding:15px; border-radius:4px; border:1px solid var(--border); margin-bottom:20px; font-size:0.9rem;">
                     <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
                         <input type="checkbox" id="tos-checkbox" style="width:auto; margin:0;">
@@ -271,7 +270,7 @@
         </div>
     </div>
 
-    <!-- Custom Confirmation Modal -->
+    <!-- Confirm Buy Modal -->
     <div id="confirm-modal" class="modal-overlay" style="z-index: 3000;">
         <div class="modal-content" style="text-align: center;">
             <h3 id="confirm-msg" style="margin-bottom: 25px; line-height: 1.5;">Are you sure you want to buy the shirt name and then the size?</h3>
@@ -282,7 +281,7 @@
         </div>
     </div>
 
-    <!-- Checkout Terms of Service Modal Popup -->
+    <!-- Checkout TOS Modal Popup -->
     <div id="checkout-tos-modal" class="modal-overlay" style="z-index: 3000;">
         <div class="modal-content">
             <button class="modal-close" onclick="closeModal('checkout-tos-modal')">&times;</button>
@@ -295,15 +294,16 @@
         </div>
     </div>
 
+    <!-- CORE LOGIC SCRIPT (NO FIREBASE) -->
     <script>
-        // Database & State
+        // Database Variables (Local Storage Only)
         let users = JSON.parse(localStorage.getItem('tomboytuff_users')) || {};
         let currentUser = localStorage.getItem('tomboytuff_current_user');
         
+        // This acts as the store's inventory. 
         let rawShirts = JSON.parse(localStorage.getItem('tomboytuff_shirts')) || [];
         let storeShirts = typeof rawShirts[0] === 'string' ? [] : rawShirts; 
         
-        // Promo Codes logic
         let promoCodes = JSON.parse(localStorage.getItem('tomboytuff_promos')) || { "TOMBOYTUFF": 10 };
         
         let uploadedBase64 = "";
@@ -311,11 +311,7 @@
         let checkoutTotal = 0;
         let activeDiscountPct = 0;
         let confirmAction = null; 
-
-        // Default avatar requested by user
         const DEFAULT_AVATAR = "image_2026-09-13_142534093.png";
-
-        // Discord Webhook
         const WEBHOOK_URL = "https://discord.com/api/webhooks/1548750256668151861/ude5SVe4tcsfMHaTBI9tA8PHhw47qwIcMFdeTNfZrUAbBIMe91AsSC1wmCrf5wvJMms2";
 
         function submitAuth() {
@@ -327,11 +323,7 @@
                 currentUser = 'owner';
                 if (!users['owner']) users['owner'] = { username: 'owner', password: 'imtheowner', avatar: DEFAULT_AVATAR, orders: [], cart: [], banned: false };
             } else {
-                // Check if banned
-                if (users[username] && users[username].banned) {
-                    return alert("This account has been banned by the developer.");
-                }
-                
+                if (users[username] && users[username].banned) return alert("This account has been banned by the developer.");
                 if (users[username] && users[username].password !== password) return alert("Incorrect password or username taken.");
                 if (!users[username]) users[username] = { username, password, avatar: DEFAULT_AVATAR, orders: [], cart: [], banned: false };
                 currentUser = username;
@@ -344,7 +336,6 @@
 
         function initializeApp() {
             if(!users[currentUser].cart) users[currentUser].cart = [];
-            // Migration for existing accounts lacking the default avatar
             if(!users[currentUser].avatar || users[currentUser].avatar === 'https://via.placeholder.com/80') {
                 users[currentUser].avatar = DEFAULT_AVATAR;
                 localStorage.setItem('tomboytuff_users', JSON.stringify(users));
@@ -365,7 +356,7 @@
             location.reload();
         }
 
-        /* --- User & Admin Profile Functions --- */
+        /* --- Admin Profile --- */
         function loadProfile() {
             const user = users[currentUser];
             document.getElementById('prof-username').innerText = user.username;
@@ -398,12 +389,11 @@
             const urlInput = document.getElementById('shirt-img-url').value;
             const price = parseFloat(document.getElementById('shirt-price').value) || 25.00;
             const stock = parseInt(document.getElementById('shirt-stock').value) || 0;
-            
             if(!name) return alert("Shirt Name is required");
             
             const finalImg = uploadedBase64 || urlInput || 'https://via.placeholder.com/300x300?text=No+Image';
             
-            storeShirts.push({ id: Date.now(), name, img: finalImg, price, stock });
+            storeShirts.push({ id: Date.now(), name: name, img: finalImg, price: price, stock: stock });
             localStorage.setItem('tomboytuff_shirts', JSON.stringify(storeShirts));
             
             document.getElementById('shirt-name').value = '';
@@ -426,7 +416,6 @@
             const code = document.getElementById('new-code-name').value.trim().toUpperCase();
             const pct = parseInt(document.getElementById('new-code-pct').value);
             if(!code || isNaN(pct)) return alert("Enter valid code and percentage.");
-            
             promoCodes[code] = pct;
             localStorage.setItem('tomboytuff_promos', JSON.stringify(promoCodes));
             document.getElementById('new-code-name').value = '';
@@ -442,10 +431,7 @@
 
         function renderAdminCodes() {
             const list = document.getElementById('admin-codes-list');
-            if(Object.keys(promoCodes).length === 0) {
-                list.innerHTML = "<p style='color:var(--text-muted); font-size:0.9rem;'>No active codes.</p>";
-                return;
-            }
+            if(Object.keys(promoCodes).length === 0) return list.innerHTML = "<p style='color:var(--text-muted); font-size:0.9rem;'>No active codes.</p>";
             list.innerHTML = Object.keys(promoCodes).map(code => `
                 <div class="code-item">
                     <span><strong>${code}</strong> (${promoCodes[code]}% OFF)</span>
@@ -455,11 +441,7 @@
         }
 
         function toggleBanUser(username) {
-            if (users[username].banned) {
-                users[username].banned = false;
-            } else {
-                users[username].banned = true;
-            }
+            users[username].banned = !users[username].banned;
             localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             renderAdminUsers();
         }
@@ -471,41 +453,31 @@
             
             let allUsers = Object.keys(users).filter(u => u !== 'owner');
             
+            // Filters based on search bar
             if (searchTerm) {
                 allUsers = allUsers.filter(u => u.toLowerCase().includes(searchTerm));
             }
             
-            if(allUsers.length === 0) {
-                list.innerHTML = "<p style='color:var(--text-muted); font-size:0.9rem;'>No matching users found.</p>";
-                return;
-            }
-            
-            list.innerHTML = allUsers.map(username => `
+            if(allUsers.length === 0) return list.innerHTML = "<p style='color:var(--text-muted); font-size:0.9rem;'>No matching users found.</p>";
+            list.innerHTML = allUsers.map(u => `
                 <div class="user-item">
-                    <span><strong>${username}</strong> ${users[username].banned ? '<span style="color:var(--danger);">(BANNED)</span>' : ''}</span>
-                    <button onclick="toggleBanUser('${username}')" style="background:none; border:none; color:${users[username].banned ? 'var(--success)' : 'var(--danger)'}; cursor:pointer; font-weight:bold;">
-                        ${users[username].banned ? 'Unban' : 'Ban'}
-                    </button>
+                    <span><strong>${u}</strong> ${users[u].banned ? '<span style="color:var(--danger);">(BANNED)</span>' : ''}</span>
+                    <button onclick="toggleBanUser('${u}')" style="background:none; border:none; color:${users[u].banned ? 'var(--success)' : 'var(--danger)'}; cursor:pointer; font-weight:bold;">${users[u].banned ? 'Unban' : 'Ban'}</button>
                 </div>
             `).join('');
         }
 
-        /* --- Store UI --- */
+        /* --- Store Rendering --- */
         function loadStore() {
             const grid = document.getElementById('store-listings');
-            if (storeShirts.length === 0) {
-                grid.innerHTML = '<p style="color:var(--text-muted); grid-column: 1/-1;">No shirts published yet.</p>';
-                return;
-            }
+            if (storeShirts.length === 0) return grid.innerHTML = '<p style="color:var(--text-muted); grid-column: 1/-1;">No shirts published yet.</p>';
+            
             grid.innerHTML = storeShirts.map(s => {
                 const outOfStock = s.stock <= 0;
-                const deleteBtnHtml = (currentUser === 'owner') 
-                    ? `<button class="delete-shirt-btn" onclick="deleteShirt(event, ${s.id})">Delete</button>` 
-                    : ``;
-
+                const deleteBtn = (currentUser === 'owner') ? `<button class="delete-shirt-btn" onclick="deleteShirt(event, ${s.id})">Delete</button>` : ``;
                 return `
                 <div class="shirt-card ${outOfStock ? 'out-of-stock' : ''}" onclick="openProduct(${s.id})">
-                    ${deleteBtnHtml}
+                    ${deleteBtn}
                     <div class="stock-badge">${outOfStock ? 'SOLD OUT' : s.stock + ' Left'}</div>
                     <img class="shirt-img" src="${s.img}" alt="${s.name}">
                     <div class="shirt-info">
@@ -527,11 +499,8 @@
             document.getElementById('product-modal').style.display = 'flex';
         }
 
-        function closeModal(id) {
-            document.getElementById(id).style.display = 'none';
-        }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        /* --- Cart & Purchasing --- */
         function addToCartFromModal() {
             const shirt = storeShirts.find(s => s.id === selectedShirtId);
             const size = document.getElementById('size-select').value;
@@ -545,18 +514,13 @@
         function buyNowFromModal() {
             const shirt = storeShirts.find(s => s.id === selectedShirtId);
             const size = document.getElementById('size-select').value;
-            
             users[currentUser].cart.push({ ...shirt, size, cartId: Date.now() });
             localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             updateCartUI();
             closeModal('product-modal');
-
             document.getElementById('confirm-msg').innerText = `Are you sure you want to buy the ${shirt.name} and then the ${size}?`;
             document.getElementById('confirm-modal').style.display = 'flex';
-            confirmAction = { 
-                yes: () => { document.getElementById('confirm-modal').style.display = 'none'; startCheckoutFromCart(); }, 
-                no: () => { document.getElementById('confirm-modal').style.display = 'none'; switchView('cart'); }
-            };
+            confirmAction = { yes: () => { closeModal('confirm-modal'); startCheckoutFromCart(); }, no: () => { closeModal('confirm-modal'); switchView('cart'); }};
         }
 
         function closeConfirm(isYes) {
@@ -568,13 +532,11 @@
             const cart = users[currentUser].cart;
             document.getElementById('cart-count').innerText = cart.length;
             const container = document.getElementById('cart-items');
-            
             if (cart.length === 0) {
                 container.innerHTML = '<p style="color:var(--text-muted);">Your cart is empty.</p>';
                 document.getElementById('cart-footer').style.display = 'none';
                 return;
             }
-
             let total = 0;
             container.innerHTML = cart.map(item => {
                 total += item.price;
@@ -587,7 +549,6 @@
                     <button onclick="removeFromCart(${item.cartId})" style="background:none; border:none; color:var(--danger); cursor:pointer; font-weight:bold;">Remove</button>
                 </div>`;
             }).join('');
-            
             document.getElementById('cart-total-disp').innerText = total.toFixed(2);
             document.getElementById('cart-footer').style.display = 'block';
         }
@@ -598,12 +559,9 @@
             updateCartUI();
         }
 
-        /* --- Checkout Flow --- */
         function startCheckoutFromCart() {
-            const cart = users[currentUser].cart;
-            if(cart.length === 0) return;
-            
-            checkoutTotal = cart.reduce((sum, item) => sum + item.price, 0);
+            if(users[currentUser].cart.length === 0) return;
+            checkoutTotal = users[currentUser].cart.reduce((sum, item) => sum + item.price, 0);
             activeDiscountPct = 0;
             document.getElementById('promo-code').value = '';
             document.getElementById('tos-checkbox').checked = false;
@@ -614,7 +572,6 @@
         function applyPromo() {
             const codeInput = document.getElementById('promo-code').value.trim().toUpperCase();
             if(!codeInput) return;
-
             if (promoCodes.hasOwnProperty(codeInput)) {
                 activeDiscountPct = promoCodes[codeInput];
                 updateCheckoutTotalDisplay();
@@ -626,74 +583,49 @@
 
         function updateCheckoutTotalDisplay() {
             let final = checkoutTotal;
-            if(activeDiscountPct > 0) {
-                final = final - (final * (activeDiscountPct / 100));
-            }
+            if(activeDiscountPct > 0) final = final - (final * (activeDiscountPct / 100));
             document.getElementById('checkout-total').innerText = final.toFixed(2);
         }
 
         function processPayment() {
-            const cc = document.getElementById('cc-num').value;
-            if(cc.length < 15) return alert("Please enter a valid card number.");
+            if(document.getElementById('cc-num').value.length < 15) return alert("Please enter a valid card number.");
             if(!document.getElementById('tos-checkbox').checked) return alert("You must agree to the Terms of Service to purchase.");
             
             const cart = users[currentUser].cart;
             let webhookContent = `**🛒 New Purchase from TOMBOYTUFF**\n**User:** ${currentUser}\n**Total Paid:** $${document.getElementById('checkout-total').innerText}\n**Items:**\n`;
             
             cart.forEach(item => {
-                // Update Inventory
                 let globalShirtIndex = storeShirts.findIndex(s => s.id === item.id);
                 if(globalShirtIndex > -1 && storeShirts[globalShirtIndex].stock > 0) {
                     storeShirts[globalShirtIndex].stock -= 1;
                 }
                 
-                // Log Order internally
                 let finalPrice = activeDiscountPct > 0 ? item.price - (item.price * (activeDiscountPct / 100)) : item.price;
                 users[currentUser].orders.push(`${item.name} (Size: ${item.size}) - Paid: $${finalPrice.toFixed(2)}`);
-                
-                // Add to Webhook log
                 webhookContent += `- ${item.name} (Size: ${item.size})\n`;
             });
             
-            // Format webhook payload to include their profile picture
             let currentAvatar = users[currentUser].avatar;
-            // Discord API requires an absolute http/https URL for 'avatar_url'. 
-            // If the user hasn't uploaded a Base64 image and is just using the default filename, convert it to an absolute URL.
             if (!currentAvatar.startsWith('http') && !currentAvatar.startsWith('data:')) {
                 currentAvatar = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1) + currentAvatar;
             }
-
-            let payload = {
-                content: webhookContent,
-                username: currentUser
-            };
             
-            // Note: Discord drops the entire webhook if you try to pass raw Base64 data strings into avatar_url. 
-            // It will securely attach the icon if it's a valid link or the default image.
-            if (!currentAvatar.startsWith('data:')) {
-                payload.avatar_url = currentAvatar;
-            }
+            let payload = { content: webhookContent, username: currentUser };
+            if (!currentAvatar.startsWith('data:')) payload.avatar_url = currentAvatar;
             
-            // Save inventory & clear user cart
             localStorage.setItem('tomboytuff_shirts', JSON.stringify(storeShirts));
             users[currentUser].cart = [];
             localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             
-            // Send Discord Webhook
-            fetch(WEBHOOK_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            }).catch(e => console.error("Webhook Error:", e));
+            fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             
-            // Cleanup UI
-            updateCartUI();
-            loadOrders();
+            updateCartUI(); 
+            loadOrders(); 
             loadStore(); 
             
-            document.getElementById('cc-name').value = '';
+            document.getElementById('cc-name').value = ''; 
             document.getElementById('cc-num').value = '';
-            document.getElementById('cc-exp').value = '';
+            document.getElementById('cc-exp').value = ''; 
             document.getElementById('cc-cvc').value = '';
             
             alert("Thank you for purchasing from TOMBOYTUFF!");
@@ -701,23 +633,17 @@
         }
 
         function loadOrders() {
-            const user = users[currentUser];
             const list = document.getElementById('user-orders-list');
-            if (!user.orders || user.orders.length === 0) {
-                list.innerHTML = "<p style='color:var(--text-muted);'>No orders placed yet.</p>";
-                return;
-            }
-            list.innerHTML = user.orders.map(o => `<div class="box" style="margin-bottom:10px; padding:15px;">${o}</div>`).join('');
+            if (!users[currentUser].orders || users[currentUser].orders.length === 0) return list.innerHTML = "<p style='color:var(--text-muted);'>No orders placed yet.</p>";
+            list.innerHTML = users[currentUser].orders.map(o => `<div class="box" style="margin-bottom:10px; padding:15px;">${o}</div>`).join('');
         }
 
         function switchView(viewName) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById('view-' + viewName).classList.add('active');
-            
             document.querySelectorAll('nav a').forEach(a => a.classList.remove('active-link'));
             const link = document.getElementById('nav-' + viewName);
             if(link) link.classList.add('active-link');
-            
             window.scrollTo(0,0);
         }
 
