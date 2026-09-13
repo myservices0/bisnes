@@ -19,24 +19,32 @@
         /* Auth Overlay */
         #auth-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 1000;
+            background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 1000;
         }
         .auth-card {
             background: var(--surface); border: 1px solid var(--border); padding: 30px;
-            border-radius: 8px; width: 360px; text-align: center;
+            border-radius: 8px; width: 380px; text-align: center;
         }
         .auth-card h2 { margin-bottom: 20px; font-weight: 600; }
+        .auth-btn-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
         .google-btn {
             background: #ffffff; color: #000; border: none; padding: 12px; width: 100%;
-            border-radius: 4px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px;
+            border-radius: 4px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
         }
-        .auth-form { display: none; flex-direction: column; gap: 12px; text-align: left; }
+        .standard-btn {
+            background: #333; color: #fff; border: 1px solid var(--border); padding: 12px; width: 100%;
+            border-radius: 4px; font-weight: bold; cursor: pointer;
+        }
+        .auth-form { display: none; flex-direction: column; gap: 12px; text-align: left; margin-top: 15px; }
         .auth-form input {
-            background: var(--bg); border: 1px solid var(--border); padding: 10px; color: #fff; border-radius: 4px;
+            background: var(--bg); border: 1px solid var(--border); padding: 10px; color: #fff; border-radius: 4px; width: 100%;
         }
         .auth-form button {
             background: var(--accent); color: #fff; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer;
         }
+        .email-picker { display: none; flex-direction: column; gap: 8px; margin-top: 10px; text-align: left; }
+        .email-option { background: var(--bg); border: 1px solid var(--border); padding: 10px; border-radius: 4px; cursor: pointer; }
+        .email-option:hover { border-color: var(--accent); }
 
         /* App Layout */
         header {
@@ -52,12 +60,17 @@
         .view { display: none; }
         .view.active { display: block; }
 
-        /* ToS View Styling */
+        /* Profile Box */
+        .profile-box { background: var(--surface); border: 1px solid var(--border); padding: 30px; border-radius: 8px; display: flex; gap: 20px; align-items: center; }
+        .profile-avatar { width: 80px; height: 80px; border-radius: 50%; background: #444; object-fit: cover; border: 2px solid var(--accent); }
+        .profile-info p { margin-bottom: 8px; color: var(--text-muted); }
+        .profile-info span { color: var(--primary); font-weight: 600; }
+
+        /* ToS Box */
         .tos-box { background: var(--surface); border: 1px solid var(--border); padding: 30px; border-radius: 8px; line-height: 1.6; }
         .tos-box h2 { margin-bottom: 15px; }
         .tos-box p { margin-bottom: 15px; color: var(--text-muted); }
         .agree-btn { background: #22c55e; color: #fff; border: none; padding: 12px 24px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 10px; }
-        .agree-btn:hover { background: #16a34a; }
     </style>
 </head>
 <body>
@@ -66,14 +79,27 @@
     <div id="auth-overlay">
         <div class="auth-card">
             <h2>Sign in to tomboytuff</h2>
-            <button class="google-btn" onclick="showPasswordStep()">
-                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.13 0-5.78-2.11-6.73-4.96H1.2v3.15C3.21 21.34 7.31 24 12 24z"/><path fill="#FBBC05" d="M5.27 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.6H1.2C.43 8.15 0 9.89 0 12s.43 3.85 1.2 5.4l4.07-3.16z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.21 2.66 1.2 6.6l4.07 3.15c.95-2.85 3.6-4.96 6.73-4.96z"/></svg>
-                Continue with Google
-            </button>
-            <div id="password-step" class="auth-form">
-                <input type="email" id="google-email" placeholder="Enter your Google email" required>
-                <input type="password" id="google-password" placeholder="Create or enter a password" required>
-                <button onclick="completeAuth()">Enter Website</button>
+            <div id="auth-initial" class="auth-btn-group">
+                <button class="google-btn" onclick="startGoogleFlow()">
+                    <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.13 0-5.78-2.11-6.73-4.96H1.2v3.15C3.21 21.34 7.31 24 12 24z"/><path fill="#FBBC05" d="M5.27 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.6H1.2C.43 8.15 0 9.89 0 12s.43 3.85 1.2 5.4l4.07-3.16z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.21 2.66 1.2 6.6l4.07 3.15c.95-2.85 3.6-4.96 6.73-4.96z"/></svg>
+                    Continue with Google
+                </button>
+                <button class="standard-btn" onclick="showStandardForm()">Sign in with Username & Password</button>
+            </div>
+
+            <!-- Google Email Picker Step -->
+            <div id="google-picker" class="email-picker">
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 5px;">Select a Google account:</p>
+                <div class="email-option" onclick="selectEmail('tomboyuser1@gmail.com')">tomboyuser1@gmail.com</div>
+                <div class="email-option" onclick="selectEmail('gamerstuff@gmail.com')">gamerstuff@gmail.com</div>
+                <div class="email-option" onclick="selectEmail('mygoogleaccount@gmail.com')">mygoogleaccount@gmail.com</div>
+            </div>
+
+            <!-- Registration/Password Step for Google or Standard -->
+            <div id="auth-form" class="auth-form">
+                <input type="text" id="input-username" placeholder="Choose a Unique Username" required>
+                <input type="password" id="input-password" placeholder="Create a Password" required>
+                <button onclick="submitAuth()">Complete Sign In</button>
             </div>
         </div>
     </div>
@@ -85,26 +111,46 @@
             <a onclick="switchView('store')">Store</a>
             <a onclick="switchView('orders')">Orders</a>
             <a onclick="switchView('codes')">Codes</a>
+            <a onclick="switchView('profile')">Profile</a>
             <a onclick="switchView('tos')">Terms of Service</a>
         </nav>
     </header>
 
     <main>
-        <!-- Store View (Blank as requested) -->
+        <!-- Store View -->
         <div id="view-store" class="view active">
-            <!-- Blank content area -->
+            <div id="owner-panel" style="display:none; background:var(--surface); padding:20px; border-radius:8px; margin-bottom:20px;">
+                <h3>Owner Dashboard (Add Shirts)</h3>
+                <input type="text" id="shirt-name" placeholder="Shirt Name" style="padding:8px; margin-top:10px; width:100%; background:#121212; border:1px solid #333; color:#fff;">
+                <button onclick="addShirt()" style="margin-top:10px; padding:10px; background:#22c55e; color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Publish Shirt</button>
+            </div>
+            <div id="store-listings"></div>
         </div>
 
         <!-- Orders View -->
         <div id="view-orders" class="view">
             <h2>Your Orders</h2>
-            <p style="color: var(--text-muted); margin-top: 15px;">No orders placed yet.</p>
+            <div id="user-orders-list" style="margin-top: 15px; color: var(--text-muted);">No orders placed yet.</div>
         </div>
 
         <!-- Codes View -->
         <div id="view-codes" class="view">
             <h2>Active Codes</h2>
             <p style="color: var(--text-muted); margin-top: 15px;">No active promo codes available.</p>
+        </div>
+
+        <!-- Profile View -->
+        <div id="view-profile" class="view">
+            <h2>User Profile</h2>
+            <div class="profile-box" style="margin-top: 20px;">
+                <img id="profile-avatar-img" class="profile-avatar" src="https://via.placeholder.com/80" alt="Avatar">
+                <div class="profile-info">
+                    <p>Username: <span id="prof-username"></span></p>
+                    <p>Email: <span id="prof-email"></span></p>
+                    <p>Password: <span id="prof-password"></span></p>
+                    <button onclick="changeAvatar()" style="background:var(--accent); color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; margin-top:5px;">Change Icon URL</button>
+                </div>
+            </div>
         </div>
 
         <!-- Terms of Service View -->
@@ -121,21 +167,116 @@
     </main>
 
     <script>
-        function showPasswordStep() {
-            document.querySelector('.google-btn').style.display = 'none';
-            document.getElementById('password-step').style.display = 'flex';
+        let selectedEmail = "";
+        let users = JSON.parse(localStorage.getItem('tomboytuff_users')) || {};
+        let currentUser = localStorage.getItem('tomboytuff_current_user');
+        let storeShirts = JSON.parse(localStorage.getItem('tomboytuff_shirts')) || [];
+
+        function startGoogleFlow() {
+            document.getElementById('auth-initial').style.display = 'none';
+            document.getElementById('google-picker').style.display = 'flex';
         }
 
-        function completeAuth() {
-            const email = document.getElementById('google-email').value;
-            const pass = document.getElementById('google-password').value;
-            if(!email || !pass) {
-                alert('Please enter your Google email and password.');
+        function selectEmail(email) {
+            selectedEmail = email;
+            document.getElementById('google-picker').style.display = 'none';
+            document.getElementById('auth-form').style.display = 'flex';
+        }
+
+        function showStandardForm() {
+            selectedEmail = "standard_user@tomboytuff.com";
+            document.getElementById('auth-initial').style.display = 'none';
+            document.getElementById('auth-form').style.display = 'flex';
+        }
+
+        function submitAuth() {
+            const username = document.getElementById('input-username').value.trim();
+            const password = document.getElementById('input-password').value.trim();
+
+            if (!username || !password) {
+                alert("Please fill in both fields.");
                 return;
             }
-            // Save state
-            localStorage.setItem('tomboytuff_auth', JSON.stringify({ email, pass }));
+
+            // Owner bypass check
+            if (username === 'owner' && password === 'imtheowner') {
+                currentUser = 'owner';
+                if (!users['owner']) {
+                    users['owner'] = { username: 'owner', email: 'owner@tomboytuff.com', password: 'imtheowner', avatar: 'https://via.placeholder.com/80', orders: [] };
+                }
+            } else {
+                // Check if username already exists under a different profile
+                if (users[username] && users[username].password !== password) {
+                    alert("This username is already taken by another user!");
+                    return;
+                }
+                if (!users[username]) {
+                    users[username] = { username, email: selectedEmail, password, avatar: 'https://via.placeholder.com/80', orders: [] };
+                }
+                currentUser = username;
+            }
+
+            localStorage.setItem('tomboytuff_users', JSON.stringify(users));
+            localStorage.setItem('tomboytuff_current_user', currentUser);
+            
+            initializeApp();
+        }
+
+        function initializeApp() {
             document.getElementById('auth-overlay').style.display = 'none';
+            loadProfile();
+            loadStore();
+            loadOrders();
+        }
+
+        function loadProfile() {
+            const user = users[currentUser];
+            if (!user) return;
+            document.getElementById('prof-username').innerText = user.username;
+            document.getElementById('prof-email').innerText = user.email;
+            document.getElementById('prof-password').innerText = user.password;
+            document.getElementById('profile-avatar-img').src = user.avatar;
+
+            if (currentUser === 'owner') {
+                document.getElementById('owner-panel').style.display = 'block';
+            }
+        }
+
+        function changeAvatar() {
+            const newUrl = prompt("Enter new image URL for your profile icon:");
+            if (newUrl) {
+                users[currentUser].avatar = newUrl;
+                localStorage.setItem('tomboytuff_users', JSON.stringify(users));
+                loadProfile();
+            }
+        }
+
+        function addShirt() {
+            const name = document.getElementById('shirt-name').value;
+            if(!name) return;
+            storeShirts.push(name);
+            localStorage.setItem('tomboytuff_shirts', JSON.stringify(storeShirts));
+            document.getElementById('shirt-name').value = '';
+            loadStore();
+        }
+
+        function loadStore() {
+            const container = document.getElementById('store-listings');
+            if (storeShirts.length === 0) {
+                container.innerHTML = currentUser === 'owner' ? '<p style="color:var(--text-muted)">No shirts published yet.</p>' : '';
+                return;
+            }
+            container.innerHTML = storeShirts.map(s => `<div style="background:var(--surface); padding:15px; border-radius:6px; margin-bottom:10px;"><h3>${s}</h3></div>`).join('');
+        }
+
+        function loadOrders() {
+            const user = users[currentUser];
+            const list = document.getElementById('user-orders-list');
+            if (!user.orders || user.orders.length === 0) {
+                list.innerHTML = "No orders placed yet.";
+                return;
+            }
+            list.innerHTML = user.orders.map(o => `<div>Order: ${o}</div>`).join('');
         }
 
         function switchView(viewName) {
@@ -145,15 +286,12 @@
         }
 
         function agreeToTos() {
-            localStorage.setItem('tomboytuff_tos_agreed', 'true');
             switchView('store');
         }
 
-        // Check prior auth session on load
         window.onload = function() {
-            const savedAuth = localStorage.getItem('tomboytuff_auth');
-            if (savedAuth) {
-                document.getElementById('auth-overlay').style.display = 'none';
+            if (currentUser && users[currentUser]) {
+                initializeApp();
             }
         }
     </script>
