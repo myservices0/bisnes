@@ -162,6 +162,8 @@
                 </div>
                 <div style="border-top: 1px solid var(--border); margin-top: 20px; padding-top: 20px;">
                     <h4 style="margin-bottom:10px;">Manage Users (Ban/Unban)</h4>
+                    <!-- Search Bar Added Here -->
+                    <input type="text" id="user-search-input" placeholder="Search usernames..." onkeyup="renderAdminUsers()" style="margin-bottom: 10px;">
                     <div id="admin-users-list" style="max-height: 150px; overflow-y: auto;"></div>
                 </div>
             </div>
@@ -259,6 +261,7 @@
                 <option value="Medium">Medium</option>
                 <option value="Large">Large</option>
                 <option value="XL">XL</option>
+                <option value="XXL">XXL</option> <!-- XXL Added Here -->
             </select>
 
             <div class="btn-group">
@@ -463,10 +466,17 @@
 
         function renderAdminUsers() {
             const list = document.getElementById('admin-users-list');
-            const allUsers = Object.keys(users).filter(u => u !== 'owner');
+            const searchInput = document.getElementById('user-search-input');
+            const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+            
+            let allUsers = Object.keys(users).filter(u => u !== 'owner');
+            
+            if (searchTerm) {
+                allUsers = allUsers.filter(u => u.toLowerCase().includes(searchTerm));
+            }
             
             if(allUsers.length === 0) {
-                list.innerHTML = "<p style='color:var(--text-muted); font-size:0.9rem;'>No registered users yet.</p>";
+                list.innerHTML = "<p style='color:var(--text-muted); font-size:0.9rem;'>No matching users found.</p>";
                 return;
             }
             
