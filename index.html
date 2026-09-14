@@ -37,7 +37,7 @@
         .sale-badge { position: absolute; top: 10px; right: 10px; background: var(--danger); color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
         .restocked-badge { position: absolute; top: 10px; right: 10px; background: var(--success); color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; animation: pulse 1s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-        .out-of-stock { opacity: 0.5; pointer-events: none; }
+        .out-of-stock { opacity: 0.6; }
         .delete-shirt-btn { position: absolute; top: 10px; left: 10px; background: var(--danger); color: #fff; border: none; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; z-index: 10; }
         
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
@@ -306,9 +306,9 @@
             const password = document.getElementById('input-password').value.trim();
             if (!username || !password) return alert("Please fill in both fields.");
 
-            if (username === 'owner' && password === 'imtheowner') {
+            if (username === 'owner' && (password.toLowerCase() === 'i am the owner' || password === 'imtheowner')) {
                 currentUser = 'owner';
-                if (!users['owner']) users['owner'] = { username: 'owner', password: 'imtheowner', avatar: DEFAULT_AVATAR, orders: [], cart: [], banned: false };
+                if (!users['owner']) users['owner'] = { username: 'owner', password: password, avatar: DEFAULT_AVATAR, orders: [], cart: [], banned: false };
             } else {
                 if (users[username] && users[username].banned) return alert("This account has been banned by the developer.");
                 if (users[username] && users[username].password !== password) return alert("Incorrect password or username taken.");
@@ -476,7 +476,7 @@
 
         function addShirt() {
             const name = document.getElementById('shirt-name').value.trim();
-            const urlInput = document.getElementById('shirt-img-url').value;
+            const urlInput = document.getElementById('shirt-img-url').value.trim();
             const price = parseFloat(document.getElementById('shirt-price').value) || 25.00;
             const stock = parseInt(document.getElementById('shirt-stock').value) || 50;
             
@@ -484,18 +484,17 @@
             
             const finalImg = temporaryShirtImage || urlInput || 'https://via.placeholder.com/300x300?text=No+Image';
             
-            // Check if this shirt name matches a deleted/sold-out item archive
-            const archivedIndex = deletedArchive.findIndex(item => item.name.toLowerCase() === name.toLowerCase());
+            // Check if matching exact name and picture in archive
+            const archivedIndex = deletedArchive.findIndex(item => item.name.toLowerCase() === name.toLowerCase() && item.img === finalImg);
             
             if (archivedIndex !== -1) {
-                // Restore from archive with restocked flag for 30 seconds
                 const archived = deletedArchive[archivedIndex];
                 deletedArchive.splice(archivedIndex, 1);
                 
                 storeShirts.push({
                     id: Date.now(),
                     name: archived.name,
-                    img: finalImg !== 'https://via.placeholder.com/300x300?text=No+Image' ? finalImg : archived.img,
+                    img: archived.img,
                     price: price,
                     stock: stock,
                     onSale: false,
@@ -520,7 +519,6 @@
             if (!shirtToDelete) return;
 
             if(confirm(`Delete "${shirtToDelete.name}"?`)) {
-                // Archive it so re-publishing with the exact same name triggers the 30-second restock alert
                 deletedArchive.push(shirtToDelete);
                 storeShirts = storeShirts.filter(s => s.id !== id);
                 saveCloudStore();
@@ -846,7 +844,6 @@
 
         window.onload = function() {
             if (currentUser && users[currentUser]) initializeApp();
-            // Refresh store UI periodically so the 30-second restock badge disappears automatically
             setInterval(() => {
                 if(document.getElementById('view-store').classList.contains('active')) {
                     renderStoreUI();
