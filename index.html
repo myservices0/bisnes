@@ -34,8 +34,9 @@
         .shirt-img { width: 100%; height: 250px; object-fit: cover; background: #111; }
         .shirt-info { padding: 15px; text-align: center; font-weight: 600; font-size: 1.1rem; }
         .stock-badge { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; border: 1px solid var(--border); }
-        .out-of-stock { opacity: 0.5; pointer-events: none; }
-        .delete-shirt-btn { position: absolute; top: 10px; left: 10px; background: var(--danger); color: #fff; border: none; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; z-index: 10; }
+        .out-of-stock { opacity: 0.6; }
+        .out-of-stock .shirt-img, .out-of-stock .shirt-info { pointer-events: none; }
+        .delete-shirt-btn { position: absolute; top: 10px; left: 10px; background: var(--danger); color: #fff; border: none; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; z-index: 20; pointer-events: auto; }
         
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
         .modal-content { background: var(--surface); border: 1px solid var(--border); padding: 25px; border-radius: 8px; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; }
@@ -56,7 +57,7 @@
         .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
         
         .box { background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: 8px; line-height: 1.6; }
-        .code-item, .user-item { display: flex; justify-content: space-between; background: var(--bg); padding: 10px; border: 1px solid var(--border); margin-bottom: 5px; border-radius: 4px; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .code-item, .user-item, .discount-item { display: flex; justify-content: space-between; background: var(--bg); padding: 10px; border: 1px solid var(--border); margin-bottom: 8px; border-radius: 4px; align-items: center; flex-wrap: wrap; gap: 10px; }
         .profile-layout { display:flex; gap:20px; align-items:center; flex-wrap: wrap; justify-content: center; text-align: center; }
     </style>
 </head>
@@ -117,6 +118,11 @@
                         <button type="button" onclick="addPromoCode()" style="width:100%; padding:8px; background:var(--surface-light); color:#fff; border:1px solid var(--border); border-radius:4px; cursor:pointer; margin-bottom:15px;">Add Code</button>
                         <div id="admin-codes-list" style="max-height: 100px; overflow-y: auto;"></div>
                     </div>
+                </div>
+
+                <div style="border-top: 1px solid var(--border); margin-top: 20px; padding-top: 20px;">
+                    <h4 style="margin-bottom:10px;">Item Discount Manager</h4>
+                    <div id="admin-discount-list" style="max-height: 200px; overflow-y: auto;"></div>
                 </div>
 
                 <div style="border-top: 1px solid var(--border); margin-top: 20px; padding-top: 20px;">
@@ -220,7 +226,7 @@
             <h2 id="modal-shirt-name" style="margin-bottom:5px;">Shirt Name</h2>
             <p id="modal-shirt-stock-display" style="color:var(--success); font-size:0.85rem; margin-bottom:15px;">In Stock</p>
             <img id="modal-shirt-img" src="" style="width:100%; height:250px; object-fit:cover; border-radius:4px; background:#111; margin-bottom:15px;">
-            <p style="font-size:1.2rem; font-weight:bold; margin-bottom:10px;">$<span id="modal-shirt-price">0.00</span></p>
+            <p style="font-size:1.2rem; font-weight:bold; margin-bottom:10px;" id="modal-price-container">$<span id="modal-shirt-price">0.00</span></p>
             <label style="color:var(--text-muted); font-size:0.9rem;">Select Size:</label>
             <select id="size-select" class="size-selector">
                 <option value="Small">Small</option><option value="Medium">Medium</option>
@@ -314,6 +320,7 @@
             loadOrders();
             renderAdminCodes();
             renderAdminUsers();
+            renderAdminDiscounts();
             switchView('store');
             
             setInterval(fetchCloudStore, 5000);
@@ -367,6 +374,7 @@
                 renderAnnouncementBanner();
                 if(document.getElementById('view-store').classList.contains('active')) {
                     renderStoreUI();
+                    renderAdminDiscounts();
                 }
             })
             .catch(err => console.log("Cloud sync error"));
@@ -444,7 +452,7 @@
             
             const finalImg = temporaryShirtImage || urlInput || 'https://via.placeholder.com/300x300?text=No+Image';
             
-            storeShirts.push({ id: Date.now(), name, img: finalImg, price, stock });
+            storeShirts.push({ id: Date.now(), name, img: finalImg, price, stock, onSale: false, salePrice: price });
             saveCloudStore();
             
             document.getElementById('shirt-name').value = '';
@@ -459,6 +467,44 @@
                 storeShirts = storeShirts.filter(s => s.id !== id);
                 saveCloudStore();
             }
+        }
+
+        function renderAdminDiscounts() {
+            const list = document.getElementById('admin-discount-list');
+            if(!list) return;
+            if(storeShirts.length === 0) {
+                list.innerHTML = "<p style='color:var(--text-muted); font-size:0.9rem;'>No items available.</p>";
+                return;
+            }
+            list.innerHTML = storeShirts.map(s => `
+                <div class="discount-item">
+                    <div style="flex: 1; min-width: 140px;">
+                        <strong>${s.name}</strong><br>
+                        <span style="font-size:0.85rem; color:var(--text-muted);">Orig: $${s.price.toFixed(2)}</span>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <label style="font-size:0.85rem; display:flex; align-items:center; gap:5px; cursor:pointer;">
+                            <input type="checkbox" id="disc-check-${s.id}" ${s.onSale ? 'checked' : ''}> Sale
+                        </label>
+                        <input type="number" id="disc-price-${s.id}" value="${s.salePrice !== undefined ? s.salePrice.toFixed(2) : s.price.toFixed(2)}" style="width: 80px; padding: 5px; margin:0;" step="0.01" placeholder="Custom $">
+                        <button type="button" onclick="saveItemDiscount(${s.id})" style="background:var(--accent); color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.8rem;">Save</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function saveItemDiscount(id) {
+            const s = storeShirts.find(item => item.id === id);
+            if(!s) return;
+            const isChecked = document.getElementById(`disc-check-${id}`).checked;
+            const customPrice = parseFloat(document.getElementById(`disc-price-${id}`).value);
+
+            s.onSale = isChecked;
+            if(!isNaN(customPrice)) {
+                s.salePrice = customPrice;
+            }
+            saveCloudStore();
+            alert(`Discount updated for ${s.name}!`);
         }
 
         function addPromoCode() {
@@ -480,6 +526,7 @@
 
         function renderAdminCodes() {
             const list = document.getElementById('admin-codes-list');
+            if(!list) return;
             if(Object.keys(promoCodes).length === 0) return list.innerHTML = "<p style='color:var(--text-muted); font-size:0.9rem;'>No active codes.</p>";
             list.innerHTML = Object.keys(promoCodes).map(code => `
                 <div class="code-item">
@@ -497,6 +544,7 @@
 
         function renderAdminUsers() {
             const list = document.getElementById('admin-users-list');
+            if(!list) return;
             const searchInput = document.getElementById('user-search-input');
             const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
             let allUsers = Object.keys(users).filter(u => u !== 'owner');
@@ -517,6 +565,12 @@
             grid.innerHTML = storeShirts.map(s => {
                 const outOfStock = s.stock <= 0;
                 const deleteBtn = (currentUser === 'owner') ? `<button class="delete-shirt-btn" onclick="deleteShirt(event, ${s.id})">Delete</button>` : ``;
+                
+                let priceHTML = `$${s.price.toFixed(2)}`;
+                if (s.onSale) {
+                    priceHTML = `<span style="text-decoration: line-through; color: var(--text-muted); font-size: 0.85rem; margin-right: 6px;">$${s.price.toFixed(2)}</span> <span style="color: var(--success);">$${s.salePrice.toFixed(2)}</span>`;
+                }
+
                 return `
                 <div class="shirt-card ${outOfStock ? 'out-of-stock' : ''}" onclick="openProduct(${s.id})">
                     ${deleteBtn}
@@ -524,7 +578,7 @@
                     <img class="shirt-img" src="${s.img}" alt="${s.name}">
                     <div class="shirt-info">
                         <div>${s.name}</div>
-                        <div style="color:var(--text-muted); font-size:0.9rem; margin-top:5px;">$${s.price.toFixed(2)}</div>
+                        <div style="font-size:0.9rem; margin-top:5px;">${priceHTML}</div>
                     </div>
                 </div>`;
             }).join('');
@@ -536,7 +590,14 @@
             selectedShirtId = id;
             document.getElementById('modal-shirt-name').innerText = shirt.name;
             document.getElementById('modal-shirt-img').src = shirt.img;
-            document.getElementById('modal-shirt-price').innerText = shirt.price.toFixed(2);
+            
+            const effectivePrice = shirt.onSale ? shirt.salePrice : shirt.price;
+            if (shirt.onSale) {
+                document.getElementById('modal-price-container').innerHTML = `<span style="text-decoration: line-through; color: var(--text-muted); font-size: 0.9rem; margin-right: 8px;">$${shirt.price.toFixed(2)}</span> $<span id="modal-shirt-price">${shirt.salePrice.toFixed(2)}</span>`;
+            } else {
+                document.getElementById('modal-price-container').innerHTML = `$<span>${shirt.price.toFixed(2)}</span>`;
+            }
+
             document.getElementById('modal-shirt-stock-display').innerText = `${shirt.stock} Left In Stock`;
             document.getElementById('product-modal').style.display = 'flex';
         }
@@ -546,7 +607,8 @@
         function addToCartFromModal() {
             const shirt = storeShirts.find(s => s.id === selectedShirtId);
             const size = document.getElementById('size-select').value;
-            users[currentUser].cart.push({ ...shirt, size, cartId: Date.now() });
+            const effectivePrice = shirt.onSale ? shirt.salePrice : shirt.price;
+            users[currentUser].cart.push({ ...shirt, price: effectivePrice, size, cartId: Date.now() });
             localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             updateCartUI();
             closeModal('product-modal');
@@ -556,7 +618,8 @@
         function buyNowFromModal() {
             const shirt = storeShirts.find(s => s.id === selectedShirtId);
             const size = document.getElementById('size-select').value;
-            users[currentUser].cart.push({ ...shirt, size, cartId: Date.now() });
+            const effectivePrice = shirt.onSale ? shirt.salePrice : shirt.price;
+            users[currentUser].cart.push({ ...shirt, price: effectivePrice, size, cartId: Date.now() });
             localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             updateCartUI();
             closeModal('product-modal');
@@ -686,6 +749,9 @@
             document.querySelectorAll('nav a').forEach(a => a.classList.remove('active-link'));
             const link = document.getElementById('nav-' + viewName);
             if(link) link.classList.add('active-link');
+            if (viewName === 'store') {
+                renderAdminDiscounts();
+            }
             window.scrollTo(0,0);
         }
 
