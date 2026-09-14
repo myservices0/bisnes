@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>tomboytuff</title>
     <style>
-        :root { --bg: #0d0d0d; --surface: #181818; --surface-light: #242424; --primary: #ffffff; --text-muted: #888888; --border: #333333; --accent: #2563eb; --success: #16a34a; --danger: #dc2626; --warning: #d97706; }
+        :root { --bg: #0d0d0d; --surface: #181818; --surface-light: #242424; --primary: #ffffff; --text-muted: #888888; --border: #333333; --accent: #2563eb; --success: #16a34a; --danger: #dc2626; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--bg); color: var(--primary); min-height: 100vh; display: flex; flex-direction: column; }
         
@@ -34,10 +34,7 @@
         .shirt-img { width: 100%; height: 250px; object-fit: cover; background: #111; }
         .shirt-info { padding: 15px; text-align: center; font-weight: 600; font-size: 1.1rem; }
         .stock-badge { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; border: 1px solid var(--border); }
-        .sale-badge { position: absolute; top: 10px; right: 10px; background: var(--danger); color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
-        .restocked-badge { position: absolute; top: 10px; right: 10px; background: var(--success); color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-        .out-of-stock { opacity: 0.6; }
+        .out-of-stock { opacity: 0.5; pointer-events: none; }
         .delete-shirt-btn { position: absolute; top: 10px; left: 10px; background: var(--danger); color: #fff; border: none; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; z-index: 10; }
         
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
@@ -59,7 +56,7 @@
         .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
         
         .box { background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: 8px; line-height: 1.6; }
-        .code-item, .user-item, .flash-item { display: flex; justify-content: space-between; background: var(--bg); padding: 10px; border: 1px solid var(--border); margin-bottom: 8px; border-radius: 4px; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .code-item, .user-item { display: flex; justify-content: space-between; background: var(--bg); padding: 10px; border: 1px solid var(--border); margin-bottom: 5px; border-radius: 4px; align-items: center; flex-wrap: wrap; gap: 10px; }
         .profile-layout { display:flex; gap:20px; align-items:center; flex-wrap: wrap; justify-content: center; text-align: center; }
     </style>
 </head>
@@ -91,7 +88,9 @@
 
     <main>
         <!-- Live Announcement Banner -->
-        <div id="live-announcement-banner" style="display:none; text-align:center; padding:12px; font-weight:bold; font-size:0.95rem; margin-bottom:20px; border-radius:4px;"></div>
+        <div id="live-announcement-banner" style="display:none; background:var(--accent); color:#fff; text-align:center; padding:12px; font-weight:bold; font-size:0.95rem; margin-bottom:20px; border-radius:4px;">
+            <span id="banner-text"></span> — <span id="banner-countdown"></span>
+        </div>
 
         <!-- Store View -->
         <div id="view-store" class="view active">
@@ -103,9 +102,9 @@
                         <input type="text" id="shirt-name" placeholder="Shirt Name">
                         <input type="number" id="shirt-price" placeholder="Price (e.g. 25)" value="25">
                         <input type="number" id="shirt-stock" placeholder="Initial Stock Quantity" value="50">
-                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Select Image File (< 500KB):</p>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Select Image from PC Files:</p>
                         <input type="file" id="shirt-file-input" accept="image/*" style="margin-bottom:10px; color:#fff;" onchange="previewLocalShirtFile(event)">
-                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Or Paste Image URL (Recommended):</p>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Or Paste Image File Link / URL:</p>
                         <input type="text" id="shirt-img-url" placeholder="Image URL (https://...)">
                         <button type="button" onclick="addShirt()" style="width:100%; padding:10px; background:var(--accent); color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Publish Live to Cloud</button>
                     </div>
@@ -121,30 +120,12 @@
                 </div>
 
                 <div style="border-top: 1px solid var(--border); margin-top: 20px; padding-top: 20px;">
-                    <h4 style="margin-bottom:10px;">Flash Sale Manager (Select Items & Set 15% Off or Custom Price)</h4>
-                    <div id="admin-flash-sale-list" style="max-height: 200px; overflow-y: auto;"></div>
-                </div>
-
-                <div style="border-top: 1px solid var(--border); margin-top: 20px; padding-top: 20px;">
-                    <h4 style="margin-bottom:10px;">Live Announcement & Countdown Banner</h4>
+                    <h4 style="margin-bottom:10px;">Live Text & Countdown Banner</h4>
                     <input type="text" id="owner-announcement-text" placeholder="Announcement message...">
                     <div style="display:flex; gap:10px; margin-bottom:10px;">
                         <input type="number" id="ann-days" placeholder="Days" min="0" style="width:33%;">
                         <input type="number" id="ann-hours" placeholder="Hours" min="0" max="23" style="width:33%;">
                         <input type="number" id="ann-mins" placeholder="Minutes" min="0" max="59" style="width:33%;">
-                    </div>
-                    <div style="display:flex; gap:20px; align-items:center; margin-bottom:10px; flex-wrap:wrap; font-size:0.9rem;">
-                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-                            <input type="checkbox" id="ann-show-countdown" style="width:auto; margin:0;"> Show Countdown to Customers
-                        </label>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="color:var(--text-muted);">Banner Color:</span>
-                            <select id="ann-color" style="width:auto; padding:6px; margin:0;">
-                                <option value="red">Red</option>
-                                <option value="white">White</option>
-                                <option value="blue">Blue</option>
-                            </select>
-                        </div>
                     </div>
                     <button type="button" onclick="publishAnnouncement()" style="width:100%; padding:10px; background:var(--accent); color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Publish Live Announcement</button>
                 </div>
@@ -239,7 +220,7 @@
             <h2 id="modal-shirt-name" style="margin-bottom:5px;">Shirt Name</h2>
             <p id="modal-shirt-stock-display" style="color:var(--success); font-size:0.85rem; margin-bottom:15px;">In Stock</p>
             <img id="modal-shirt-img" src="" style="width:100%; height:250px; object-fit:cover; border-radius:4px; background:#111; margin-bottom:15px;">
-            <p id="modal-price-container" style="font-size:1.2rem; font-weight:bold; margin-bottom:10px;">$<span id="modal-shirt-price">0.00</span></p>
+            <p style="font-size:1.2rem; font-weight:bold; margin-bottom:10px;">$<span id="modal-shirt-price">0.00</span></p>
             <label style="color:var(--text-muted); font-size:0.9rem;">Select Size:</label>
             <select id="size-select" class="size-selector">
                 <option value="Small">Small</option><option value="Medium">Medium</option>
@@ -278,23 +259,21 @@
 
     <script>
         // -------------------------------------------------------------------------
-        // JSONBIN CLOUD CONFIGURATION (Updated with New Bin & Master Key)
+        // JSONBIN CLOUD CONFIGURATION
         // -------------------------------------------------------------------------
-        const JSONBIN_BIN_ID = "6aa7619aac6210605ac9ba97";
-        const JSONBIN_API_KEY = "$2a$10$0FfZ8fPbbnWu6vo/P41ZauF9JAHDczXnhbKKF7GC7fpLFMtBlOX46";
+        const JSONBIN_BIN_ID = "6aa6f95fac6210605ac8c5a3";
+        const JSONBIN_API_KEY = "$2a$10$t9K24qCSTHhgE4StsUP23u2w8/NdDVXi9tM9ZPHGdHPfjHcvONi7u";
 
         let users = JSON.parse(localStorage.getItem('tomboytuff_users')) || {};
         let currentUser = localStorage.getItem('tomboytuff_current_user');
         
         let storeShirts = [];
-        let deletedArchive = [];
-        let currentAnnouncement = { text: "", targetTime: null, showCountdown: false, bannerColor: "red" };
+        let currentAnnouncement = { text: "", targetTime: null };
         let countdownInterval = null;
-        let lastLocalUpdate = 0;
 
         let promoCodes = JSON.parse(localStorage.getItem('tomboytuff_promos')) || { "TOMBOYTUFF": 10 };
         
-        let temporaryShirtImage = ""; 
+        let temporaryShirtImage = ""; // Holds file selection from PC
         let selectedShirtId = null;
         let checkoutTotal = 0;
         let activeDiscountPct = 0;
@@ -307,9 +286,9 @@
             const password = document.getElementById('input-password').value.trim();
             if (!username || !password) return alert("Please fill in both fields.");
 
-            if (username.toLowerCase() === 'owner' && (password.toLowerCase() === 'i am the owner' || password.toLowerCase() === 'imtheowner')) {
+            if (username === 'owner' && password === 'imtheowner') {
                 currentUser = 'owner';
-                if (!users['owner']) users['owner'] = { username: 'owner', password: password, avatar: DEFAULT_AVATAR, orders: [], cart: [], banned: false };
+                if (!users['owner']) users['owner'] = { username: 'owner', password: 'imtheowner', avatar: DEFAULT_AVATAR, orders: [], cart: [], banned: false };
             } else {
                 if (users[username] && users[username].banned) return alert("This account has been banned by the developer.");
                 if (users[username] && users[username].password !== password) return alert("Incorrect password or username taken.");
@@ -319,19 +298,14 @@
 
             localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             localStorage.setItem('tomboytuff_current_user', currentUser);
-            
-            saveCloudStore(() => {
-                initializeApp();
-            });
+            initializeApp();
         }
 
         function initializeApp() {
-            if(!users[currentUser]) {
-                users[currentUser] = { username: currentUser, avatar: DEFAULT_AVATAR, orders: [], cart: [], banned: false };
-            }
             if(!users[currentUser].cart) users[currentUser].cart = [];
             if(!users[currentUser].avatar || users[currentUser].avatar === 'https://via.placeholder.com/80') {
                 users[currentUser].avatar = DEFAULT_AVATAR;
+                localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             }
             document.getElementById('auth-overlay').style.display = 'none';
             loadProfile();
@@ -341,6 +315,8 @@
             renderAdminCodes();
             renderAdminUsers();
             switchView('store');
+            
+            setInterval(fetchCloudStore, 5000);
         }
 
         function signOut() {
@@ -349,7 +325,6 @@
         }
 
         function loadProfile() {
-            if (!currentUser || !users[currentUser]) return;
             document.getElementById('prof-username').innerText = users[currentUser].username;
             document.getElementById('profile-avatar-img').src = users[currentUser].avatar;
             document.getElementById('owner-panel').style.display = (currentUser === 'owner') ? 'block' : 'none';
@@ -363,12 +338,11 @@
                 users[currentUser].avatar = e.target.result;
                 localStorage.setItem('tomboytuff_users', JSON.stringify(users));
                 loadProfile();
-                lastLocalUpdate = Date.now();
-                saveCloudStore();
             };
             reader.readAsDataURL(file);
         }
 
+        // Handle image selection from PC files
         function previewLocalShirtFile(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -379,80 +353,37 @@
             reader.readAsDataURL(file);
         }
 
+        // FETCH DATA FROM JSONBIN CLOUD
         function fetchCloudStore() {
             if (JSONBIN_BIN_ID === "YOUR_BIN_ID_HERE") return;
             
-            fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest?t=` + Date.now(), {
+            fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
                 headers: { 'X-Master-Key': JSONBIN_API_KEY }
             })
-            .then(res => {
-                if (!res.ok) throw new Error("Failed to fetch from cloud (Status: " + res.status + ")");
-                return res.json();
-            })
+            .then(res => res.json())
             .then(data => {
-                if (data && data.record) {
-                    if (Date.now() - lastLocalUpdate > 8000) {
-                        storeShirts = data.record.shirts || [];
-                        deletedArchive = data.record.deletedArchive || [];
-                        if (document.getElementById('view-store').classList.contains('active')) {
-                            renderStoreUI();
-                            renderAdminFlashSales();
-                        }
-                    }
-
-                    currentAnnouncement = data.record.announcement || { text: "", targetTime: null, showCountdown: false, bannerColor: "red" };
-                    if (data.record.users) {
-                        users = data.record.users;
-                        localStorage.setItem('tomboytuff_users', JSON.stringify(users));
-                    }
-                    if (data.record.promos) {
-                        promoCodes = data.record.promos;
-                        localStorage.setItem('tomboytuff_promos', JSON.stringify(promoCodes));
-                    }
-                }
+                storeShirts = data.record.shirts || [];
+                currentAnnouncement = data.record.announcement || { text: "", targetTime: null };
                 renderAnnouncementBanner();
-                if(currentUser && users[currentUser]) {
-                    updateCartUI();
-                    loadOrders();
-                    renderAdminUsers();
+                if(document.getElementById('view-store').classList.contains('active')) {
+                    renderStoreUI();
                 }
             })
-            .catch(err => console.log("Cloud sync fetch error: " + err.message));
+            .catch(err => console.log("Cloud sync error"));
         }
 
-        function saveCloudStore(callback) {
-            if (JSONBIN_BIN_ID === "YOUR_BIN_ID_HERE") {
-                if (callback) callback();
-                return;
-            }
-
-            lastLocalUpdate = Date.now();
-
+        // SAVE DATA TO JSONBIN CLOUD
+        function saveCloudStore() {
             fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Master-Key': JSONBIN_API_KEY
                 },
-                body: JSON.stringify({ 
-                    shirts: storeShirts, 
-                    deletedArchive, 
-                    announcement: currentAnnouncement,
-                    users: users,
-                    promos: promoCodes
-                })
+                body: JSON.stringify({ shirts: storeShirts, announcement: currentAnnouncement })
             })
-            .then(res => {
-                if (!res.ok) throw new Error("Cloud rejected the update (Status: " + res.status + ")");
-                return res.json();
-            })
-            .then(() => {
-                if (callback) callback();
-            })
-            .catch(err => {
-                console.log("Cloud Sync Warning: " + err.message);
-                if (callback) callback();
-            });
+            .then(() => fetchCloudStore())
+            .catch(err => alert("Error saving to cloud database."));
         }
 
         function publishAnnouncement() {
@@ -461,55 +392,31 @@
             const days = parseInt(document.getElementById('ann-days').value) || 0;
             const hours = parseInt(document.getElementById('ann-hours').value) || 0;
             const mins = parseInt(document.getElementById('ann-mins').value) || 0;
-            const showCountdown = document.getElementById('ann-show-countdown').checked;
-            const bannerColor = document.getElementById('ann-color').value;
 
             const totalMs = ((days * 24 * 60) + (hours * 60) + mins) * 60 * 1000;
             const targetTime = totalMs > 0 ? Date.now() + totalMs : null;
 
-            currentAnnouncement = { text, targetTime, showCountdown, bannerColor };
-            saveCloudStore(() => {
-                alert("Live announcement published successfully to cloud!");
-            });
+            currentAnnouncement = { text, targetTime };
+            saveCloudStore();
+            alert("Live announcement published successfully!");
         }
 
         function renderAnnouncementBanner() {
             const banner = document.getElementById('live-announcement-banner');
-            if (!currentAnnouncement.text) {
+            if (!currentAnnouncement.text && !currentAnnouncement.targetTime) {
                 banner.style.display = 'none';
                 return;
             }
             banner.style.display = 'block';
-
-            const color = currentAnnouncement.bannerColor || 'red';
-            if (color === 'white') {
-                banner.style.background = '#ffffff';
-                banner.style.color = '#0d0d0d';
-                banner.style.border = '1px solid var(--border)';
-            } else if (color === 'blue') {
-                banner.style.background = '#2563eb';
-                banner.style.color = '#ffffff';
-                banner.style.border = 'none';
-            } else {
-                banner.style.background = '#dc2626';
-                banner.style.color = '#ffffff';
-                banner.style.border = 'none';
-            }
-
-            let htmlText = `<span>${currentAnnouncement.text}</span>`;
-            if (currentAnnouncement.showCountdown && currentAnnouncement.targetTime) {
-                htmlText += ` — <span id="banner-countdown"></span>`;
-            }
-            banner.innerHTML = htmlText;
+            document.getElementById('banner-text').innerText = currentAnnouncement.text || "";
 
             if (countdownInterval) clearInterval(countdownInterval);
 
-            if (currentAnnouncement.showCountdown && currentAnnouncement.targetTime) {
+            if (currentAnnouncement.targetTime) {
                 function updateTimer() {
                     const now = Date.now();
                     const diff = currentAnnouncement.targetTime - now;
                     const cdElem = document.getElementById('banner-countdown');
-                    if (!cdElem) return;
                     if (diff <= 0) {
                         cdElem.innerText = "EXPIRED";
                         return;
@@ -522,123 +429,36 @@
                 }
                 updateTimer();
                 countdownInterval = setInterval(updateTimer, 1000);
+            } else {
+                document.getElementById('banner-countdown').innerText = '';
             }
         }
 
         function addShirt() {
-            const name = document.getElementById('shirt-name').value.trim();
-            const urlInput = document.getElementById('shirt-img-url').value.trim();
+            const name = document.getElementById('shirt-name').value;
+            const urlInput = document.getElementById('shirt-img-url').value;
             const price = parseFloat(document.getElementById('shirt-price').value) || 25.00;
-            const stock = parseInt(document.getElementById('shirt-stock').value) || 50;
+            const stock = parseInt(document.getElementById('shirt-stock').value) || 0;
             
             if(!name) return alert("Shirt Name is required");
             
             const finalImg = temporaryShirtImage || urlInput || 'https://via.placeholder.com/300x300?text=No+Image';
             
-            const archivedIndex = deletedArchive.findIndex(item => item.name.toLowerCase() === name.toLowerCase());
+            storeShirts.push({ id: Date.now(), name, img: finalImg, price, stock });
+            saveCloudStore();
             
-            if (archivedIndex !== -1) {
-                const archived = deletedArchive[archivedIndex];
-                deletedArchive.splice(archivedIndex, 1);
-                
-                storeShirts.push({
-                    id: Date.now(),
-                    name: archived.name,
-                    img: finalImg !== 'https://via.placeholder.com/300x300?text=No+Image' ? finalImg : archived.img,
-                    price: price,
-                    stock: stock,
-                    onSale: false,
-                    salePrice: price,
-                    restockedUntil: Date.now() + 30000 
-                });
-            } else {
-                storeShirts.push({ id: Date.now(), name, img: finalImg, price, stock, onSale: false, salePrice: price });
-            }
-
-            renderStoreUI();
-            renderAdminFlashSales();
-
-            saveCloudStore(() => {
-                document.getElementById('shirt-name').value = '';
-                document.getElementById('shirt-img-url').value = '';
-                document.getElementById('shirt-file-input').value = '';
-                temporaryShirtImage = "";
-                alert("Shirt published successfully to cloud!");
-            });
+            document.getElementById('shirt-name').value = '';
+            document.getElementById('shirt-img-url').value = '';
+            document.getElementById('shirt-file-input').value = '';
+            temporaryShirtImage = "";
         }
 
         function deleteShirt(event, id) {
             event.stopPropagation();
-            const shirtToDelete = storeShirts.find(s => s.id === id);
-            if (!shirtToDelete) return;
-
-            if(confirm(`Delete "${shirtToDelete.name}"?`)) {
-                deletedArchive.push(shirtToDelete);
+            if(confirm("Delete this shirt globally?")) {
                 storeShirts = storeShirts.filter(s => s.id !== id);
-                renderStoreUI();
-                renderAdminFlashSales();
-                saveCloudStore(() => {
-                    alert("Shirt deleted successfully from cloud.");
-                });
+                saveCloudStore();
             }
-        }
-
-        function renderAdminFlashSales() {
-            const list = document.getElementById('admin-flash-sale-list');
-            if(!list) return;
-            if (storeShirts.length === 0) {
-                list.innerHTML = "<p style='color:var(--text-muted); font-size:0.9rem;'>No shirts available to put on sale.</p>";
-                return;
-            }
-            list.innerHTML = storeShirts.map(s => `
-                <div class="flash-item">
-                    <div style="flex: 1; min-width: 140px;">
-                        <strong>${s.name}</strong><br>
-                        <span style="font-size:0.85rem; color:var(--text-muted);">Regular: $${s.price.toFixed(2)}</span>
-                    </div>
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <label style="font-size:0.85rem; display:flex; align-items:center; gap:5px; cursor:pointer;">
-                            <input type="checkbox" id="sale-check-${s.id}" ${s.onSale ? 'checked' : ''} onchange="toggleFlashSale(${s.id})"> On Sale
-                        </label>
-                        <input type="number" id="sale-price-${s.id}" value="${s.salePrice !== undefined ? s.salePrice.toFixed(2) : s.price.toFixed(2)}" style="width: 80px; padding: 5px; margin:0;" step="0.01">
-                        <button type="button" onclick="applyFifteenPct(${s.id})" style="background:var(--surface-light); color:#fff; border:1px solid var(--border); padding:5px 8px; border-radius:4px; cursor:pointer; font-size:0.8rem;">15% Off</button>
-                        <button type="button" onclick="saveFlashSale(${s.id})" style="background:var(--accent); color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.8rem;">Save</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function toggleFlashSale(id) {
-            const s = storeShirts.find(item => item.id === id);
-            if (!s) return;
-            const isChecked = document.getElementById(`sale-check-${id}`).checked;
-            if (isChecked && (!s.salePrice || s.salePrice >= s.price)) {
-                s.salePrice = Number((s.price * 0.85).toFixed(2));
-                document.getElementById(`sale-price-${id}`).value = s.salePrice.toFixed(2);
-            }
-        }
-
-        function applyFifteenPct(id) {
-            const s = storeShirts.find(item => item.id === id);
-            if (!s) return;
-            s.salePrice = Number((s.price * 0.85).toFixed(2));
-            document.getElementById(`sale-check-${id}`).checked = true;
-            document.getElementById(`sale-price-${id}`).value = s.salePrice.toFixed(2);
-        }
-
-        function saveFlashSale(id) {
-            const s = storeShirts.find(item => item.id === id);
-            if (!s) return;
-            const isChecked = document.getElementById(`sale-check-${id}`).checked;
-            const customPrice = parseFloat(document.getElementById(`sale-price-${id}`).value);
-            
-            s.onSale = isChecked;
-            if (!isNaN(customPrice)) {
-                s.salePrice = customPrice;
-            }
-            saveCloudStore(() => {
-                alert(`Flash sale updated for ${s.name}!`);
-            });
         }
 
         function addPromoCode() {
@@ -650,19 +470,16 @@
             document.getElementById('new-code-name').value = '';
             document.getElementById('new-code-pct').value = '';
             renderAdminCodes();
-            saveCloudStore(() => alert("Promo code added and synced!"));
         }
 
         function deletePromoCode(code) {
             delete promoCodes[code];
             localStorage.setItem('tomboytuff_promos', JSON.stringify(promoCodes));
             renderAdminCodes();
-            saveCloudStore(() => alert("Promo code deleted!"));
         }
 
         function renderAdminCodes() {
             const list = document.getElementById('admin-codes-list');
-            if(!list) return;
             if(Object.keys(promoCodes).length === 0) return list.innerHTML = "<p style='color:var(--text-muted); font-size:0.9rem;'>No active codes.</p>";
             list.innerHTML = Object.keys(promoCodes).map(code => `
                 <div class="code-item">
@@ -676,12 +493,10 @@
             users[username].banned = !users[username].banned;
             localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             renderAdminUsers();
-            saveCloudStore(() => alert(`User status updated for ${username}.`));
         }
 
         function renderAdminUsers() {
             const list = document.getElementById('admin-users-list');
-            if(!list) return;
             const searchInput = document.getElementById('user-search-input');
             const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
             let allUsers = Object.keys(users).filter(u => u !== 'owner');
@@ -702,79 +517,52 @@
             grid.innerHTML = storeShirts.map(s => {
                 const outOfStock = s.stock <= 0;
                 const deleteBtn = (currentUser === 'owner') ? `<button class="delete-shirt-btn" onclick="deleteShirt(event, ${s.id})">Delete</button>` : ``;
-                
-                let badgeHTML = `<div class="stock-badge">${outOfStock ? 'SOLD OUT' : s.stock + ' Left'}</div>`;
-                if (s.restockedUntil && Date.now() < s.restockedUntil) {
-                    badgeHTML = `<div class="restocked-badge">RESTOCKED!</div>`;
-                } else if (s.onSale) {
-                    badgeHTML = `<div class="sale-badge">15% OFF</div>`;
-                }
-
-                let priceHTML = `$${s.price.toFixed(2)}`;
-                if (s.onSale) {
-                    priceHTML = `<span style="text-decoration: line-through; color: var(--text-muted); font-size: 0.85rem; margin-right: 6px;">$${s.price.toFixed(2)}</span> <span style="color: var(--success);">$${s.salePrice.toFixed(2)}</span>`;
-                }
-
                 return `
                 <div class="shirt-card ${outOfStock ? 'out-of-stock' : ''}" onclick="openProduct(${s.id})">
                     ${deleteBtn}
-                    ${badgeHTML}
+                    <div class="stock-badge">${outOfStock ? 'SOLD OUT' : s.stock + ' Left'}</div>
                     <img class="shirt-img" src="${s.img}" alt="${s.name}">
                     <div class="shirt-info">
                         <div>${s.name}</div>
-                        <div style="font-size:0.9rem; margin-top:5px;">${priceHTML}</div>
+                        <div style="color:var(--text-muted); font-size:0.9rem; margin-top:5px;">$${s.price.toFixed(2)}</div>
                     </div>
                 </div>`;
             }).join('');
         }
 
         function openProduct(id) {
-            const item = storeShirts.find(s => s.id === id);
-            if(!item) return;
+            const shirt = storeShirts.find(s => s.id === id);
+            if(!shirt || shirt.stock <= 0) return;
             selectedShirtId = id;
-            document.getElementById('modal-shirt-name').innerText = item.name;
-            document.getElementById('modal-shirt-img').src = item.img;
-            
-            if (item.onSale) {
-                document.getElementById('modal-price-container').innerHTML = `<span style="text-decoration: line-through; color: var(--text-muted); font-size: 0.9rem; margin-right: 8px;">$${item.price.toFixed(2)}</span> $<span id="modal-shirt-price">${item.salePrice.toFixed(2)}</span>`;
-            } else {
-                document.getElementById('modal-price-container').innerHTML = `$<span>${item.price.toFixed(2)}</span>`;
-            }
-
-            document.getElementById('modal-shirt-stock-display').innerText = item.stock <= 0 ? "SOLD OUT" : `${item.stock} Left In Stock`;
+            document.getElementById('modal-shirt-name').innerText = shirt.name;
+            document.getElementById('modal-shirt-img').src = shirt.img;
+            document.getElementById('modal-shirt-price').innerText = shirt.price.toFixed(2);
+            document.getElementById('modal-shirt-stock-display').innerText = `${shirt.stock} Left In Stock`;
             document.getElementById('product-modal').style.display = 'flex';
         }
 
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
         function addToCartFromModal() {
-            const item = storeShirts.find(s => s.id === selectedShirtId);
-            if(item.stock <= 0) return alert("Sorry, this item is sold out.");
+            const shirt = storeShirts.find(s => s.id === selectedShirtId);
             const size = document.getElementById('size-select').value;
-            const effectivePrice = item.onSale ? item.salePrice : item.price;
-            
-            users[currentUser].cart.push({ ...item, price: effectivePrice, size, cartId: Date.now() });
+            users[currentUser].cart.push({ ...shirt, size, cartId: Date.now() });
             localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             updateCartUI();
             closeModal('product-modal');
-            alert(item.name + " (" + size + ") added to cart!");
-            saveCloudStore();
+            alert(shirt.name + " (" + size + ") added to cart!");
         }
 
         function buyNowFromModal() {
-            const item = storeShirts.find(s => s.id === selectedShirtId);
-            if(item.stock <= 0) return alert("Sorry, this item is sold out.");
+            const shirt = storeShirts.find(s => s.id === selectedShirtId);
             const size = document.getElementById('size-select').value;
-            const effectivePrice = item.onSale ? item.salePrice : item.price;
-
-            users[currentUser].cart.push({ ...item, price: effectivePrice, size, cartId: Date.now() });
+            users[currentUser].cart.push({ ...shirt, size, cartId: Date.now() });
             localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             updateCartUI();
             closeModal('product-modal');
-            document.getElementById('confirm-msg').innerText = `Are you sure you want to buy the ${item.name} in size ${size}?`;
+            document.getElementById('confirm-msg').innerText = `Are you sure you want to buy the ${shirt.name} and then the ${size}?`;
             document.getElementById('confirm-modal').style.display = 'flex';
             confirmAction = { yes: () => { closeModal('confirm-modal'); startCheckoutFromCart(); }, no: () => { closeModal('confirm-modal'); switchView('cart'); }};
-            saveCloudStore();
         }
 
         function closeConfirm(isYes) {
@@ -783,8 +571,7 @@
         }
 
         function updateCartUI() {
-            if (!currentUser || !users[currentUser]) return;
-            const cart = users[currentUser].cart || [];
+            const cart = users[currentUser].cart;
             document.getElementById('cart-count').innerText = cart.length;
             const container = document.getElementById('cart-items');
             if (cart.length === 0) {
@@ -812,11 +599,10 @@
             users[currentUser].cart = users[currentUser].cart.filter(c => c.cartId !== cartId);
             localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             updateCartUI();
-            saveCloudStore();
         }
 
         function startCheckoutFromCart() {
-            if(!users[currentUser].cart || users[currentUser].cart.length === 0) return;
+            if(users[currentUser].cart.length === 0) return;
             checkoutTotal = users[currentUser].cart.reduce((sum, item) => sum + item.price, 0);
             activeDiscountPct = 0;
             document.getElementById('promo-code').value = '';
@@ -861,8 +647,6 @@
                 webhookContent += `- ${item.name} (Size: ${item.size})\n`;
             });
             
-            users[currentUser].cart = [];
-            localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             saveCloudStore();
 
             let currentAvatar = users[currentUser].avatar;
@@ -872,6 +656,9 @@
             
             let payload = { content: webhookContent, username: currentUser };
             if (!currentAvatar.startsWith('data:')) payload.avatar_url = currentAvatar;
+            
+            users[currentUser].cart = [];
+            localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             
             fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             
@@ -889,7 +676,6 @@
 
         function loadOrders() {
             const list = document.getElementById('user-orders-list');
-            if(!list || !users[currentUser]) return;
             if (!users[currentUser].orders || users[currentUser].orders.length === 0) return list.innerHTML = "<p style='color:var(--text-muted);'>No orders placed yet.</p>";
             list.innerHTML = users[currentUser].orders.map(o => `<div class="box" style="margin-bottom:10px; padding:15px;">${o}</div>`).join('');
         }
@@ -900,21 +686,11 @@
             document.querySelectorAll('nav a').forEach(a => a.classList.remove('active-link'));
             const link = document.getElementById('nav-' + viewName);
             if(link) link.classList.add('active-link');
-            
-            if (viewName === 'store') {
-                renderAdminFlashSales();
-            }
             window.scrollTo(0,0);
         }
 
         window.onload = function() {
-            fetchCloudStore(); 
-            if (currentUser && users[currentUser]) {
-                initializeApp();
-            }
-            setInterval(() => {
-                fetchCloudStore();
-            }, 6000);
+            if (currentUser && users[currentUser]) initializeApp();
         }
     </script>
 </body>
