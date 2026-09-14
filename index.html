@@ -103,7 +103,7 @@
                         <input type="text" id="shirt-name" placeholder="Shirt Name">
                         <input type="number" id="shirt-price" placeholder="Price (e.g. 25)" value="25">
                         <input type="number" id="shirt-stock" placeholder="Initial Stock Quantity" value="50">
-                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Select Image from PC Files (Recommended: Use Image URL for fast cloud sync):</p>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Select Image from PC Files:</p>
                         <input type="file" id="shirt-file-input" accept="image/*" style="margin-bottom:10px; color:#fff;" onchange="previewLocalShirtFile(event)">
                         <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Or Paste Image File Link / URL:</p>
                         <input type="text" id="shirt-img-url" placeholder="Image URL (https://...)">
@@ -530,7 +530,8 @@
             
             const finalImg = temporaryShirtImage || urlInput || 'https://via.placeholder.com/300x300?text=No+Image';
             
-            const archivedIndex = deletedArchive.findIndex(item => item.name.toLowerCase() === name.toLowerCase() && item.img === finalImg);
+            // Check archive by exact name match to restore restocked state
+            const archivedIndex = deletedArchive.findIndex(item => item.name.toLowerCase() === name.toLowerCase());
             
             if (archivedIndex !== -1) {
                 const archived = deletedArchive[archivedIndex];
@@ -539,7 +540,7 @@
                 storeShirts.push({
                     id: Date.now(),
                     name: archived.name,
-                    img: archived.img,
+                    img: finalImg !== 'https://via.placeholder.com/300x300?text=No+Image' ? finalImg : archived.img,
                     price: price,
                     stock: stock,
                     onSale: false,
@@ -904,7 +905,7 @@
             }
             setInterval(() => {
                 fetchCloudStore();
-            }, 3000);
+            }, 6000);
         }
     </script>
 </body>
