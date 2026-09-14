@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>tomboytuff</title>
     <style>
-        :root { --bg: #0d0d0d; --surface: #181818; --surface-light: #242424; --primary: #ffffff; --text-muted: #888888; --border: #333333; --accent: #2563eb; --success: #16a34a; --danger: #dc2626; --warning: #d97706; }
+        :root { --bg: #0d0d0d; --surface: #181818; --surface-light: #242424; --primary: #ffffff; --text-muted: #888888; --border: #333333; --accent: #2563eb; --success: #16a34a; --danger: #dc2626; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--bg); color: var(--primary); min-height: 100vh; display: flex; flex-direction: column; }
         
@@ -34,7 +34,6 @@
         .shirt-img { width: 100%; height: 250px; object-fit: cover; background: #111; }
         .shirt-info { padding: 15px; text-align: center; font-weight: 600; font-size: 1.1rem; }
         .stock-badge { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; border: 1px solid var(--border); }
-        .preorder-badge { position: absolute; top: 10px; right: 10px; background: var(--warning); color: #000; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
         .out-of-stock { opacity: 0.5; pointer-events: none; }
         .delete-shirt-btn { position: absolute; top: 10px; left: 10px; background: var(--danger); color: #fff; border: none; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; z-index: 10; }
         
@@ -80,7 +79,6 @@
         <div class="brand" onclick="switchView('store')">tomboytuff</div>
         <nav>
             <a onclick="switchView('store')" id="nav-store">Store</a>
-            <a onclick="switchView('preorders')" id="nav-preorders">Pre-Orders</a>
             <a onclick="switchView('cart')" id="nav-cart">Cart (<span id="cart-count">0</span>)</a>
             <a onclick="switchView('orders')" id="nav-orders">Orders</a>
             <a onclick="switchView('profile')" id="nav-profile">Profile</a>
@@ -122,18 +120,6 @@
                 </div>
 
                 <div style="border-top: 1px solid var(--border); margin-top: 20px; padding-top: 20px;">
-                    <h4 style="margin-bottom:10px;">Add Pre-Order Shirt</h4>
-                    <input type="text" id="preorder-name" placeholder="Pre-Order Shirt Name">
-                    <input type="number" id="preorder-price" placeholder="Price (e.g. 30)" value="30">
-                    <input type="text" id="preorder-date" placeholder="Release / Shipping Date (e.g. Ships Oct 15)">
-                    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Select Image from PC Files:</p>
-                    <input type="file" id="preorder-file-input" accept="image/*" style="margin-bottom:10px; color:#fff;" onchange="previewLocalPreorderFile(event)">
-                    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Or Paste Image File Link / URL:</p>
-                    <input type="text" id="preorder-img-url" placeholder="Image URL (https://...)">
-                    <button type="button" onclick="addPreorderShirt()" style="width:100%; padding:10px; background:var(--warning); color:#000; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Publish Pre-Order Item</button>
-                </div>
-
-                <div style="border-top: 1px solid var(--border); margin-top: 20px; padding-top: 20px;">
                     <h4 style="margin-bottom:10px;">Live Text & Countdown Banner</h4>
                     <input type="text" id="owner-announcement-text" placeholder="Announcement message...">
                     <div style="display:flex; gap:10px; margin-bottom:10px;">
@@ -152,13 +138,6 @@
             </div>
             
             <div id="store-listings" class="store-grid">Loading live store...</div>
-        </div>
-
-        <!-- Pre-Orders View -->
-        <div id="view-preorders" class="view">
-            <h2>Pre-Order Store</h2>
-            <p style="color:var(--text-muted); margin-top:5px; margin-bottom:20px;">Secure upcoming drops and items before they are officially released.</p>
-            <div id="preorder-listings" class="store-grid">Loading pre-orders...</div>
         </div>
 
         <!-- Cart View -->
@@ -289,14 +268,12 @@
         let currentUser = localStorage.getItem('tomboytuff_current_user');
         
         let storeShirts = [];
-        let storePreorders = [];
         let currentAnnouncement = { text: "", targetTime: null };
         let countdownInterval = null;
 
         let promoCodes = JSON.parse(localStorage.getItem('tomboytuff_promos')) || { "TOMBOYTUFF": 10 };
         
         let temporaryShirtImage = ""; // Holds file selection from PC
-        let temporaryPreorderImage = ""; // Holds file selection for pre-orders
         let selectedShirtId = null;
         let checkoutTotal = 0;
         let activeDiscountPct = 0;
@@ -376,16 +353,6 @@
             reader.readAsDataURL(file);
         }
 
-        function previewLocalPreorderFile(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                temporaryPreorderImage = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
         // FETCH DATA FROM JSONBIN CLOUD
         function fetchCloudStore() {
             if (JSONBIN_BIN_ID === "YOUR_BIN_ID_HERE") return;
@@ -396,14 +363,10 @@
             .then(res => res.json())
             .then(data => {
                 storeShirts = data.record.shirts || [];
-                storePreorders = data.record.preorders || [];
                 currentAnnouncement = data.record.announcement || { text: "", targetTime: null };
                 renderAnnouncementBanner();
                 if(document.getElementById('view-store').classList.contains('active')) {
                     renderStoreUI();
-                }
-                if(document.getElementById('view-preorders').classList.contains('active')) {
-                    renderPreorderUI();
                 }
             })
             .catch(err => console.log("Cloud sync error"));
@@ -417,7 +380,7 @@
                     'Content-Type': 'application/json',
                     'X-Master-Key': JSONBIN_API_KEY
                 },
-                body: JSON.stringify({ shirts: storeShirts, preorders: storePreorders, announcement: currentAnnouncement })
+                body: JSON.stringify({ shirts: storeShirts, announcement: currentAnnouncement })
             })
             .then(() => fetchCloudStore())
             .catch(err => alert("Error saving to cloud database."));
@@ -490,39 +453,10 @@
             temporaryShirtImage = "";
         }
 
-        function addPreorderShirt() {
-            const name = document.getElementById('preorder-name').value;
-            const urlInput = document.getElementById('preorder-img-url').value;
-            const price = parseFloat(document.getElementById('preorder-price').value) || 30.00;
-            const dateStr = document.getElementById('preorder-date').value || "Coming Soon";
-            
-            if(!name) return alert("Pre-order Shirt Name is required");
-            
-            const finalImg = temporaryPreorderImage || urlInput || 'https://via.placeholder.com/300x300?text=Pre-Order';
-            
-            storePreorders.push({ id: Date.now(), name, img: finalImg, price, dateStr, stock: 999 });
-            saveCloudStore();
-            
-            document.getElementById('preorder-name').value = '';
-            document.getElementById('preorder-img-url').value = '';
-            document.getElementById('preorder-date').value = '';
-            document.getElementById('preorder-file-input').value = '';
-            temporaryPreorderImage = "";
-            alert("Pre-order item published successfully!");
-        }
-
         function deleteShirt(event, id) {
             event.stopPropagation();
             if(confirm("Delete this shirt globally?")) {
                 storeShirts = storeShirts.filter(s => s.id !== id);
-                saveCloudStore();
-            }
-        }
-
-        function deletePreorder(event, id) {
-            event.stopPropagation();
-            if(confirm("Delete this pre-order item globally?")) {
-                storePreorders = storePreorders.filter(p => p.id !== id);
                 saveCloudStore();
             }
         }
@@ -584,7 +518,7 @@
                 const outOfStock = s.stock <= 0;
                 const deleteBtn = (currentUser === 'owner') ? `<button class="delete-shirt-btn" onclick="deleteShirt(event, ${s.id})">Delete</button>` : ``;
                 return `
-                <div class="shirt-card ${outOfStock ? 'out-of-stock' : ''}" onclick="openProduct(${s.id}, false)">
+                <div class="shirt-card ${outOfStock ? 'out-of-stock' : ''}" onclick="openProduct(${s.id})">
                     ${deleteBtn}
                     <div class="stock-badge">${outOfStock ? 'SOLD OUT' : s.stock + ' Left'}</div>
                     <img class="shirt-img" src="${s.img}" alt="${s.name}">
@@ -596,62 +530,37 @@
             }).join('');
         }
 
-        function renderPreorderUI() {
-            const grid = document.getElementById('preorder-listings');
-            if (storePreorders.length === 0) return grid.innerHTML = '<p style="color:var(--text-muted); grid-column: 1/-1;">No pre-orders available right now.</p>';
-            
-            grid.innerHTML = storePreorders.map(p => {
-                const deleteBtn = (currentUser === 'owner') ? `<button class="delete-shirt-btn" onclick="deletePreorder(event, ${p.id})">Delete</button>` : ``;
-                return `
-                <div class="shirt-card" onclick="openProduct(${p.id}, true)">
-                    ${deleteBtn}
-                    <div class="preorder-badge">PRE-ORDER</div>
-                    <img class="shirt-img" src="${p.img}" alt="${p.name}">
-                    <div class="shirt-info">
-                        <div>${p.name}</div>
-                        <div style="color:var(--warning); font-size:0.85rem; margin-top:3px;">${p.dateStr || 'Upcoming Drop'}</div>
-                        <div style="color:var(--text-muted); font-size:0.9rem; margin-top:5px;">$${p.price.toFixed(2)}</div>
-                    </div>
-                </div>`;
-            }).join('');
-        }
-
-        let isViewingPreorderModal = false;
-        function openProduct(id, isPreorder = false) {
-            isViewingPreorderModal = isPreorder;
-            const item = isPreorder ? storePreorders.find(p => p.id === id) : storeShirts.find(s => s.id === id);
-            if(!item) return;
+        function openProduct(id) {
+            const shirt = storeShirts.find(s => s.id === id);
+            if(!shirt || shirt.stock <= 0) return;
             selectedShirtId = id;
-            document.getElementById('modal-shirt-name.innerText = item.name;'); // fixed inline call
-            document.getElementById('modal-shirt-name').innerText = item.name;
-            document.getElementById('modal-shirt-img').src = item.img;
-            document.getElementById('modal-shirt-price').innerText = item.price.toFixed(2);
-            document.getElementById('modal-shirt-stock-display').innerText = isPreorder ? `Pre-Order: ${item.dateStr}` : `${item.stock} Left In Stock`;
+            document.getElementById('modal-shirt-name').innerText = shirt.name;
+            document.getElementById('modal-shirt-img').src = shirt.img;
+            document.getElementById('modal-shirt-price').innerText = shirt.price.toFixed(2);
+            document.getElementById('modal-shirt-stock-display').innerText = `${shirt.stock} Left In Stock`;
             document.getElementById('product-modal').style.display = 'flex';
         }
 
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
         function addToCartFromModal() {
-            const item = isViewingPreorderModal ? storePreorders.find(p => p.id === selectedShirtId) : storeShirts.find(s => s.id === selectedShirtId);
+            const shirt = storeShirts.find(s => s.id === selectedShirtId);
             const size = document.getElementById('size-select').value;
-            const displayName = isViewingPreorderModal ? `[PRE-ORDER] ${item.name}` : item.name;
-            users[currentUser].cart.push({ ...item, name: displayName, size, cartId: Date.now() });
+            users[currentUser].cart.push({ ...shirt, size, cartId: Date.now() });
             localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             updateCartUI();
             closeModal('product-modal');
-            alert(item.name + " (" + size + ") added to cart!");
+            alert(shirt.name + " (" + size + ") added to cart!");
         }
 
         function buyNowFromModal() {
-            const item = isViewingPreorderModal ? storePreorders.find(p => p.id === selectedShirtId) : storeShirts.find(s => s.id === selectedShirtId);
+            const shirt = storeShirts.find(s => s.id === selectedShirtId);
             const size = document.getElementById('size-select').value;
-            const displayName = isViewingPreorderModal ? `[PRE-ORDER] ${item.name}` : item.name;
-            users[currentUser].cart.push({ ...item, name: displayName, size, cartId: Date.now() });
+            users[currentUser].cart.push({ ...shirt, size, cartId: Date.now() });
             localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             updateCartUI();
             closeModal('product-modal');
-            document.getElementById('confirm-msg').innerText = `Are you sure you want to buy the ${item.name} in size ${size}?`;
+            document.getElementById('confirm-msg').innerText = `Are you sure you want to buy the ${shirt.name} and then the ${size}?`;
             document.getElementById('confirm-modal').style.display = 'flex';
             confirmAction = { yes: () => { closeModal('confirm-modal'); startCheckoutFromCart(); }, no: () => { closeModal('confirm-modal'); switchView('cart'); }};
         }
@@ -728,7 +637,6 @@
             let webhookContent = `**🛒 New Purchase from TOMBOYTUFF**\n**User:** ${currentUser}\n**Total Paid:** $${document.getElementById('checkout-total').innerText}\n**Items:**\n`;
             
             cart.forEach(item => {
-                // Deduct stock only if it's a regular store item
                 let liveShirt = storeShirts.find(s => s.id === item.id);
                 if(liveShirt && liveShirt.stock > 0) {
                     liveShirt.stock -= 1;
@@ -778,10 +686,6 @@
             document.querySelectorAll('nav a').forEach(a => a.classList.remove('active-link'));
             const link = document.getElementById('nav-' + viewName);
             if(link) link.classList.add('active-link');
-            
-            if (viewName === 'preorders') {
-                renderPreorderUI();
-            }
             window.scrollTo(0,0);
         }
 
