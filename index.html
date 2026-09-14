@@ -35,6 +35,8 @@
         .shirt-info { padding: 15px; text-align: center; font-weight: 600; font-size: 1.1rem; }
         .stock-badge { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; border: 1px solid var(--border); }
         .sale-badge { position: absolute; top: 10px; right: 10px; background: var(--danger); color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+        .restocked-badge { position: absolute; top: 10px; right: 10px; background: var(--success); color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
         .out-of-stock { opacity: 0.5; pointer-events: none; }
         .delete-shirt-btn { position: absolute; top: 10px; left: 10px; background: var(--danger); color: #fff; border: none; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; z-index: 10; }
         
@@ -285,6 +287,7 @@
         let currentUser = localStorage.getItem('tomboytuff_current_user');
         
         let storeShirts = [];
+        let deletedArchive = [];
         let currentAnnouncement = { text: "", targetTime: null, showCountdown: false, bannerColor: "red" };
         let countdownInterval = null;
 
@@ -378,6 +381,7 @@
             .then(res => res.json())
             .then(data => {
                 storeShirts = data.record.shirts || [];
+                deletedArchive = data.record.deletedArchive || [];
                 currentAnnouncement = data.record.announcement || { text: "", targetTime: null, showCountdown: false, bannerColor: "red" };
                 renderAnnouncementBanner();
                 if(document.getElementById('view-store').classList.contains('active')) {
@@ -395,7 +399,7 @@
                     'Content-Type': 'application/json',
                     'X-Master-Key': JSONBIN_API_KEY
                 },
-                body: JSON.stringify({ shirts: storeShirts, announcement: currentAnnouncement })
+                body: JSON.stringify({ shirts: storeShirts, deletedArchive, announcement: currentAnnouncement })
             })
             .then(() => fetchCloudStore())
             .catch(err => alert("Error saving to cloud database."));
@@ -426,7 +430,6 @@
             }
             banner.style.display = 'block';
 
-            // Apply Red, White, or Blue theme styling
             const color = currentAnnouncement.bannerColor || 'red';
             if (color === 'white') {
                 banner.style.background = '#ffffff';
@@ -436,7 +439,7 @@
                 banner.style.background = '#2563eb';
                 banner.style.color = '#ffffff';
                 banner.style.border = 'none';
-            } else { // red
+            } else {
                 banner.style.background = '#dc2626';
                 banner.style.color = '#ffffff';
                 banner.style.border = 'none';
@@ -472,16 +475,37 @@
         }
 
         function addShirt() {
-            const name = document.getElementById('shirt-name').value;
+            const name = document.getElementById('shirt-name').value.trim();
             const urlInput = document.getElementById('shirt-img-url').value;
             const price = parseFloat(document.getElementById('shirt-price').value) || 25.00;
-            const stock = parseInt(document.getElementById('shirt-stock').value) || 0;
+            const stock = parseInt(document.getElementById('shirt-stock').value) || 50;
             
             if(!name) return alert("Shirt Name is required");
             
             const finalImg = temporaryShirtImage || urlInput || 'https://via.placeholder.com/300x300?text=No+Image';
             
-            storeShirts.push({ id: Date.now(), name, img: finalImg, price, stock, onSale: false, salePrice: price });
+            // Check if this shirt name matches a deleted/sold-out item archive
+            const archivedIndex = deletedArchive.findIndex(item => item.name.toLowerCase() === name.toLowerCase());
+            
+            if (archivedIndex !== -1) {
+                // Restore from archive with restocked flag for 30 seconds
+                const archived = deletedArchive[archivedIndex];
+                deletedArchive.splice(archivedIndex, 1);
+                
+                storeShirts.push({
+                    id: Date.now(),
+                    name: archived.name,
+                    img: finalImg !== 'https://via.placeholder.com/300x300?text=No+Image' ? finalImg : archived.img,
+                    price: price,
+                    stock: stock,
+                    onSale: false,
+                    salePrice: price,
+                    restockedUntil: Date.now() + 30000 // 30 seconds restock banner
+                });
+            } else {
+                storeShirts.push({ id: Date.now(), name, img: finalImg, price, stock, onSale: false, salePrice: price });
+            }
+
             saveCloudStore();
             
             document.getElementById('shirt-name').value = '';
@@ -492,7 +516,12 @@
 
         function deleteShirt(event, id) {
             event.stopPropagation();
-            if(confirm("Delete this shirt globally?")) {
+            const shirtToDelete = storeShirts.find(s => s.id === id);
+            if (!shirtToDelete) return;
+
+            if(confirm(`Delete "${shirtToDelete.name}"?`)) {
+                // Archive it so re-publishing with the exact same name triggers the 30-second restock alert
+                deletedArchive.push(shirtToDelete);
                 storeShirts = storeShirts.filter(s => s.id !== id);
                 saveCloudStore();
             }
@@ -615,7 +644,9 @@
                 const deleteBtn = (currentUser === 'owner') ? `<button class="delete-shirt-btn" onclick="deleteShirt(event, ${s.id})">Delete</button>` : ``;
                 
                 let badgeHTML = `<div class="stock-badge">${outOfStock ? 'SOLD OUT' : s.stock + ' Left'}</div>`;
-                if (s.onSale) {
+                if (s.restockedUntil && Date.now() < s.restockedUntil) {
+                    badgeHTML = `<div class="restocked-badge">RESTOCKED!</div>`;
+                } else if (s.onSale) {
                     badgeHTML = `<div class="sale-badge">15% OFF</div>`;
                 }
 
@@ -815,6 +846,12 @@
 
         window.onload = function() {
             if (currentUser && users[currentUser]) initializeApp();
+            // Refresh store UI periodically so the 30-second restock badge disappears automatically
+            setInterval(() => {
+                if(document.getElementById('view-store').classList.contains('active')) {
+                    renderStoreUI();
+                }
+            }, 1000);
         }
     </script>
 </body>
