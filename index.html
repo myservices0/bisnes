@@ -281,7 +281,7 @@
         // JSONBIN CLOUD CONFIGURATION
         // -------------------------------------------------------------------------
         const JSONBIN_BIN_ID = "6aa6f95fac6210605ac8c5a3";
-        const JSONBIN_API_KEY = "$2a$10$t9K24qCSTHhgE4StsUP23u2w8/NdDVXi9tM9ZPHGdHPfjHcvONi7u";
+        const JSONBIN_API_KEY = "$2a$10$vjG8aOF22HNbrdBbQvNyi.g2tKfQTrPjR0Y1cN1c1GgztIs8iipOy";
 
         let users = JSON.parse(localStorage.getItem('tomboytuff_users')) || {};
         let currentUser = localStorage.getItem('tomboytuff_current_user');
@@ -319,7 +319,6 @@
             localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             localStorage.setItem('tomboytuff_current_user', currentUser);
             
-            // Immediately sync new login state to cloud
             saveCloudStore(() => {
                 initializeApp();
             });
@@ -378,7 +377,6 @@
             reader.readAsDataURL(file);
         }
 
-        // CLOUD SYNCHRONIZATION WITH ERROR ALERTS
         function fetchCloudStore() {
             if (JSONBIN_BIN_ID === "YOUR_BIN_ID_HERE") return;
             
@@ -532,7 +530,6 @@
             
             const finalImg = temporaryShirtImage || urlInput || 'https://via.placeholder.com/300x300?text=No+Image';
             
-            // Check if matching exact name and picture in archive
             const archivedIndex = deletedArchive.findIndex(item => item.name.toLowerCase() === name.toLowerCase() && item.img === finalImg);
             
             if (archivedIndex !== -1) {
@@ -547,7 +544,7 @@
                     stock: stock,
                     onSale: false,
                     salePrice: price,
-                    restockedUntil: Date.now() + 30000 // 30 seconds restock banner
+                    restockedUntil: Date.now() + 30000 
                 });
             } else {
                 storeShirts.push({ id: Date.now(), name, img: finalImg, price, stock, onSale: false, salePrice: price });
