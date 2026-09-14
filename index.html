@@ -103,9 +103,9 @@
                         <input type="text" id="shirt-name" placeholder="Shirt Name">
                         <input type="number" id="shirt-price" placeholder="Price (e.g. 25)" value="25">
                         <input type="number" id="shirt-stock" placeholder="Initial Stock Quantity" value="50">
-                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Select Image from PC Files:</p>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Select Image File (< 500KB):</p>
                         <input type="file" id="shirt-file-input" accept="image/*" style="margin-bottom:10px; color:#fff;" onchange="previewLocalShirtFile(event)">
-                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Or Paste Image File Link / URL:</p>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Or Paste Image URL (Recommended):</p>
                         <input type="text" id="shirt-img-url" placeholder="Image URL (https://...)">
                         <button type="button" onclick="addShirt()" style="width:100%; padding:10px; background:var(--accent); color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Publish Live to Cloud</button>
                     </div>
@@ -357,6 +357,10 @@
         function processUserAvatar(event) {
             const file = event.target.files[0];
             if (!file) return;
+            if (file.size > 500000) {
+                alert("Image file is too large! Please choose an image under 500KB.");
+                return;
+            }
             const reader = new FileReader();
             reader.onload = function(e) { 
                 users[currentUser].avatar = e.target.result;
@@ -370,6 +374,11 @@
         function previewLocalShirtFile(event) {
             const file = event.target.files[0];
             if (!file) return;
+            if (file.size > 500000) {
+                alert("Image file is too large (>500KB). Please use an Image URL instead to ensure smooth publishing.");
+                event.target.value = "";
+                return;
+            }
             const reader = new FileReader();
             reader.onload = function(e) {
                 temporaryShirtImage = e.target.result;
@@ -530,7 +539,6 @@
             
             const finalImg = temporaryShirtImage || urlInput || 'https://via.placeholder.com/300x300?text=No+Image';
             
-            // Check archive by exact name match to restore restocked state
             const archivedIndex = deletedArchive.findIndex(item => item.name.toLowerCase() === name.toLowerCase());
             
             if (archivedIndex !== -1) {
@@ -885,7 +893,7 @@
             list.innerHTML = users[currentUser].orders.map(o => `<div class="box" style="margin-bottom:10px; padding:15px;">${o}</div>`).join('');
         }
 
-        function switchView(viewName) {
+    function switchView(viewName) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById('view-' + viewName).classList.add('active');
             document.querySelectorAll('nav a').forEach(a => a.classList.remove('active-link'));
