@@ -306,7 +306,7 @@
             const password = document.getElementById('input-password').value.trim();
             if (!username || !password) return alert("Please fill in both fields.");
 
-            if (username === 'owner' && (password.toLowerCase() === 'i am the owner' || password === 'imtheowner')) {
+            if (username.toLowerCase() === 'owner' && (password.toLowerCase() === 'i am the owner' || password.toLowerCase() === 'imtheowner')) {
                 currentUser = 'owner';
                 if (!users['owner']) users['owner'] = { username: 'owner', password: password, avatar: DEFAULT_AVATAR, orders: [], cart: [], banned: false };
             } else {
@@ -318,14 +318,17 @@
 
             localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             localStorage.setItem('tomboytuff_current_user', currentUser);
+            saveCloudStore();
             initializeApp();
         }
 
         function initializeApp() {
+            if(!users[currentUser]) {
+                users[currentUser] = { username: currentUser, avatar: DEFAULT_AVATAR, orders: [], cart: [], banned: false };
+            }
             if(!users[currentUser].cart) users[currentUser].cart = [];
             if(!users[currentUser].avatar || users[currentUser].avatar === 'https://via.placeholder.com/80') {
                 users[currentUser].avatar = DEFAULT_AVATAR;
-                localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             }
             document.getElementById('auth-overlay').style.display = 'none';
             loadProfile();
@@ -345,6 +348,7 @@
         }
 
         function loadProfile() {
+            if (!currentUser || !users[currentUser]) return;
             document.getElementById('prof-username').innerText = users[currentUser].username;
             document.getElementById('profile-avatar-img').src = users[currentUser].avatar;
             document.getElementById('owner-panel').style.display = (currentUser === 'owner') ? 'block' : 'none';
@@ -358,6 +362,7 @@
                 users[currentUser].avatar = e.target.result;
                 localStorage.setItem('tomboytuff_users', JSON.stringify(users));
                 loadProfile();
+                saveCloudStore();
             };
             reader.readAsDataURL(file);
         }
@@ -372,6 +377,7 @@
             reader.readAsDataURL(file);
         }
 
+        // FULL CLOUD SYNCHRONIZATION VIA JSONBIN
         function fetchCloudStore() {
             if (JSONBIN_BIN_ID === "YOUR_BIN_ID_HERE") return;
             
@@ -383,26 +389,49 @@
                 storeShirts = data.record.shirts || [];
                 deletedArchive = data.record.deletedArchive || [];
                 currentAnnouncement = data.record.announcement || { text: "", targetTime: null, showCountdown: false, bannerColor: "red" };
+                
+                if (data.record.users) {
+                    users = data.record.users;
+                    localStorage.setItem('tomboytuff_users', JSON.stringify(users));
+                }
+                if (data.record.promos) {
+                    promoCodes = data.record.promos;
+                    localStorage.setItem('tomboytuff_promos', JSON.stringify(promoCodes));
+                }
+
                 renderAnnouncementBanner();
                 if(document.getElementById('view-store').classList.contains('active')) {
                     renderStoreUI();
                     renderAdminFlashSales();
+                }
+                if(currentUser && users[currentUser]) {
+                    updateCartUI();
+                    loadOrders();
+                    renderAdminUsers();
                 }
             })
             .catch(err => console.log("Cloud sync error"));
         }
 
         function saveCloudStore() {
+            if (JSONBIN_BIN_ID === "YOUR_BIN_ID_HERE") return;
+
             fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Master-Key': JSONBIN_API_KEY
                 },
-                body: JSON.stringify({ shirts: storeShirts, deletedArchive, announcement: currentAnnouncement })
+                body: JSON.stringify({ 
+                    shirts: storeShirts, 
+                    deletedArchive, 
+                    announcement: currentAnnouncement,
+                    users: users,
+                    promos: promoCodes
+                })
             })
             .then(() => fetchCloudStore())
-            .catch(err => alert("Error saving to cloud database."));
+            .catch(err => console.log("Error syncing to cloud database."));
         }
 
         function publishAnnouncement() {
@@ -591,12 +620,14 @@
             document.getElementById('new-code-name').value = '';
             document.getElementById('new-code-pct').value = '';
             renderAdminCodes();
+            saveCloudStore();
         }
 
         function deletePromoCode(code) {
             delete promoCodes[code];
             localStorage.setItem('tomboytuff_promos', JSON.stringify(promoCodes));
             renderAdminCodes();
+            saveCloudStore();
         }
 
         function renderAdminCodes() {
@@ -615,6 +646,7 @@
             users[username].banned = !users[username].banned;
             localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             renderAdminUsers();
+            saveCloudStore();
         }
 
         function renderAdminUsers() {
@@ -696,6 +728,7 @@
             updateCartUI();
             closeModal('product-modal');
             alert(item.name + " (" + size + ") added to cart!");
+            saveCloudStore();
         }
 
         function buyNowFromModal() {
@@ -711,6 +744,7 @@
             document.getElementById('confirm-msg').innerText = `Are you sure you want to buy the ${item.name} in size ${size}?`;
             document.getElementById('confirm-modal').style.display = 'flex';
             confirmAction = { yes: () => { closeModal('confirm-modal'); startCheckoutFromCart(); }, no: () => { closeModal('confirm-modal'); switchView('cart'); }};
+            saveCloudStore();
         }
 
         function closeConfirm(isYes) {
@@ -719,7 +753,8 @@
         }
 
         function updateCartUI() {
-            const cart = users[currentUser].cart;
+            if (!currentUser || !users[currentUser]) return;
+            const cart = users[currentUser].cart || [];
             document.getElementById('cart-count').innerText = cart.length;
             const container = document.getElementById('cart-items');
             if (cart.length === 0) {
@@ -747,10 +782,11 @@
             users[currentUser].cart = users[currentUser].cart.filter(c => c.cartId !== cartId);
             localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             updateCartUI();
+            saveCloudStore();
         }
 
         function startCheckoutFromCart() {
-            if(users[currentUser].cart.length === 0) return;
+            if(!users[currentUser].cart || users[currentUser].cart.length === 0) return;
             checkoutTotal = users[currentUser].cart.reduce((sum, item) => sum + item.price, 0);
             activeDiscountPct = 0;
             document.getElementById('promo-code').value = '';
@@ -795,6 +831,8 @@
                 webhookContent += `- ${item.name} (Size: ${item.size})\n`;
             });
             
+            users[currentUser].cart = [];
+            localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             saveCloudStore();
 
             let currentAvatar = users[currentUser].avatar;
@@ -804,9 +842,6 @@
             
             let payload = { content: webhookContent, username: currentUser };
             if (!currentAvatar.startsWith('data:')) payload.avatar_url = currentAvatar;
-            
-            users[currentUser].cart = [];
-            localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             
             fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             
@@ -824,7 +859,7 @@
 
         function loadOrders() {
             const list = document.getElementById('user-orders-list');
-            if(!list) return;
+            if(!list || !users[currentUser]) return;
             if (!users[currentUser].orders || users[currentUser].orders.length === 0) return list.innerHTML = "<p style='color:var(--text-muted);'>No orders placed yet.</p>";
             list.innerHTML = users[currentUser].orders.map(o => `<div class="box" style="margin-bottom:10px; padding:15px;">${o}</div>`).join('');
         }
