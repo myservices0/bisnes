@@ -290,6 +290,7 @@
         let deletedArchive = [];
         let currentAnnouncement = { text: "", targetTime: null, showCountdown: false, bannerColor: "red" };
         let countdownInterval = null;
+        let lastLocalUpdate = 0; // Lock timer to prevent background sync race conditions
 
         let promoCodes = JSON.parse(localStorage.getItem('tomboytuff_promos')) || { "TOMBOYTUFF": 10 };
         
@@ -362,6 +363,7 @@
                 users[currentUser].avatar = e.target.result;
                 localStorage.setItem('tomboytuff_users', JSON.stringify(users));
                 loadProfile();
+                lastLocalUpdate = Date.now();
                 saveCloudStore();
             };
             reader.readAsDataURL(file);
@@ -378,7 +380,7 @@
         }
 
         function fetchCloudStore() {
-            if (JSONBIN_BIN_ID === "YOUR_BIN_ID_HERE") return;
+            if (JSONBIN_ID === "YOUR_BIN_ID_HERE") return;
             
             fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest?t=` + Date.now(), {
                 headers: { 'X-Master-Key': JSONBIN_API_KEY }
@@ -389,29 +391,27 @@
             })
             .then(data => {
                 if (data && data.record) {
-                    // Only update storeShirts from cloud if we aren't currently editing or if cloud has new data
-                    const remoteShirts = data.record.shirts || [];
-                    if (remoteShirts.length !== storeShirts.length || JSON.stringify(remoteShirts) !== JSON.stringify(storeShirts)) {
-                        storeShirts = remoteShirts;
+                    // Prevent background polling from overwriting local changes made in the last 8 seconds
+                    if (Date.now() - lastLocalUpdate > 8000) {
+                        storeShirts = data.record.shirts || [];
                         deletedArchive = data.record.deletedArchive || [];
-                        currentAnnouncement = data.record.announcement || { text: "", targetTime: null, showCountdown: false, bannerColor: "red" };
-                        
-                        if (data.record.users) {
-                            users = data.record.users;
-                            localStorage.setItem('tomboytuff_users', JSON.stringify(users));
-                        }
-                        if (data.record.promos) {
-                            promoCodes = data.record.promos;
-                            localStorage.setItem('tomboytuff_promos', JSON.stringify(promoCodes));
-                        }
-                        
-                        renderAnnouncementBanner();
-                        if(document.getElementById('view-store').classList.contains('active')) {
+                        if (document.getElementById('view-store').classList.contains('active')) {
                             renderStoreUI();
                             renderAdminFlashSales();
                         }
                     }
+
+                    currentAnnouncement = data.record.announcement || { text: "", targetTime: null, showCountdown: false, bannerColor: "red" };
+                    if (data.record.users) {
+                        users = data.record.users;
+                        localStorage.setItem('tomboytuff_users', JSON.stringify(users));
+                    }
+                    if (data.record.promos) {
+                        promoCodes = data.record.promos;
+                        localStorage.setItem('tomboytuff_promos', JSON.stringify(promoCodes));
+                    }
                 }
+                renderAnnouncementBanner();
                 if(currentUser && users[currentUser]) {
                     updateCartUI();
                     loadOrders();
@@ -426,6 +426,8 @@
                 if (callback) callback();
                 return;
             }
+
+            lastLocalUpdate = Date.now(); // Set lock so polling doesn't overwrite local publish
 
             fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
                 method: 'PUT',
