@@ -278,10 +278,10 @@
 
     <script>
         // -------------------------------------------------------------------------
-        // JSONBIN CLOUD CONFIGURATION (Updated with your new Master Key)
+        // JSONBIN CLOUD CONFIGURATION (Updated with New Bin & Master Key)
         // -------------------------------------------------------------------------
         const JSONBIN_BIN_ID = "6aa7619aac6210605ac9ba97";
-        const JSONBIN_API_KEY = "$2a$10$ey5QbTkAAOxKDy0nFM/ho.MTpxfHw4LyPxaB8jAHzFqWXP3XLJ/ta";
+        const JSONBIN_API_KEY = "$2a$10$0FfZ8fPbbnWu6vo/P41ZauF9JAHDczXnhbKKF7GC7fpLFMtBlOX46";
 
         let users = JSON.parse(localStorage.getItem('tomboytuff_users')) || {};
         let currentUser = localStorage.getItem('tomboytuff_current_user');
@@ -450,7 +450,7 @@
                 if (callback) callback();
             })
             .catch(err => {
-                alert("Cloud Sync Error: " + err.message);
+                console.log("Cloud Sync Warning: " + err.message);
                 if (callback) callback();
             });
         }
@@ -697,7 +697,7 @@
 
         function renderStoreUI() {
             const grid = document.getElementById('store-listings');
-            if (storeShirts.length === 0) return grid.innerHTML = '<p style="color:var(--text-muted); grid-column: 1/-1;>No shirts published yet.</p>';
+            if (storeShirts.length === 0) return grid.innerHTML = '<p style="color:var(--text-muted); grid-column: 1/-1;">No shirts published yet.</p>';
             
             grid.innerHTML = storeShirts.map(s => {
                 const outOfStock = s.stock <= 0;
