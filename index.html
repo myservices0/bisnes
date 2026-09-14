@@ -377,10 +377,11 @@
             reader.readAsDataURL(file);
         }
 
+        // CLOUD SYNCHRONIZATION WITH CACHE-BUSTING TIMESTAMP
         function fetchCloudStore() {
             if (JSONBIN_BIN_ID === "YOUR_BIN_ID_HERE") return;
             
-            fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
+            fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest?t=` + Date.now(), {
                 headers: { 'X-Master-Key': JSONBIN_API_KEY }
             })
             .then(res => {
@@ -898,16 +899,14 @@
         }
 
         window.onload = function() {
+            fetchCloudStore(); // Always fetch from cloud on load immediately
             if (currentUser && users[currentUser]) {
                 initializeApp();
-            } else {
-                fetchCloudStore();
             }
+            // Poll the cloud every 4 seconds so other devices instantly see published or deleted shirts
             setInterval(() => {
-                if(document.getElementById('view-store').classList.contains('active')) {
-                    renderStoreUI();
-                }
-            }, 1000);
+                fetchCloudStore();
+            }, 4000);
         }
     </script>
 </body>
