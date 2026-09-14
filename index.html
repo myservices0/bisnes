@@ -103,7 +103,7 @@
                         <input type="text" id="shirt-name" placeholder="Shirt Name">
                         <input type="number" id="shirt-price" placeholder="Price (e.g. 25)" value="25">
                         <input type="number" id="shirt-stock" placeholder="Initial Stock Quantity" value="50">
-                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Select Image from PC Files:</p>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Select Image from PC Files (Recommended: Use Image URL for fast cloud sync):</p>
                         <input type="file" id="shirt-file-input" accept="image/*" style="margin-bottom:10px; color:#fff;" onchange="previewLocalShirtFile(event)">
                         <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Or Paste Image File Link / URL:</p>
                         <input type="text" id="shirt-img-url" placeholder="Image URL (https://...)">
@@ -377,7 +377,6 @@
             reader.readAsDataURL(file);
         }
 
-        // CLOUD SYNCHRONIZATION WITH CACHE-BUSTING TIMESTAMP
         function fetchCloudStore() {
             if (JSONBIN_BIN_ID === "YOUR_BIN_ID_HERE") return;
             
@@ -385,7 +384,7 @@
                 headers: { 'X-Master-Key': JSONBIN_API_KEY }
             })
             .then(res => {
-                if (!res.ok) throw new Error("Failed to fetch from cloud.");
+                if (!res.ok) throw new Error("Failed to fetch from cloud (Status: " + res.status + ")");
                 return res.json();
             })
             .then(data => {
@@ -899,14 +898,13 @@
         }
 
         window.onload = function() {
-            fetchCloudStore(); // Always fetch from cloud on load immediately
+            fetchCloudStore(); 
             if (currentUser && users[currentUser]) {
                 initializeApp();
             }
-            // Poll the cloud every 4 seconds so other devices instantly see published or deleted shirts
             setInterval(() => {
                 fetchCloudStore();
-            }, 4000);
+            }, 3000);
         }
     </script>
 </body>
