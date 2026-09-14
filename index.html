@@ -357,10 +357,6 @@
         function processUserAvatar(event) {
             const file = event.target.files[0];
             if (!file) return;
-            if (file.size > 500000) {
-                alert("Image file is too large! Please choose an image under 500KB.");
-                return;
-            }
             const reader = new FileReader();
             reader.onload = function(e) { 
                 users[currentUser].avatar = e.target.result;
@@ -374,11 +370,6 @@
         function previewLocalShirtFile(event) {
             const file = event.target.files[0];
             if (!file) return;
-            if (file.size > 500000) {
-                alert("Image file is too large (>500KB). Please use an Image URL instead to ensure smooth publishing.");
-                event.target.value = "";
-                return;
-            }
             const reader = new FileReader();
             reader.onload = function(e) {
                 temporaryShirtImage = e.target.result;
@@ -398,23 +389,28 @@
             })
             .then(data => {
                 if (data && data.record) {
-                    storeShirts = data.record.shirts || [];
-                    deletedArchive = data.record.deletedArchive || [];
-                    currentAnnouncement = data.record.announcement || { text: "", targetTime: null, showCountdown: false, bannerColor: "red" };
-                    
-                    if (data.record.users) {
-                        users = data.record.users;
-                        localStorage.setItem('tomboytuff_users', JSON.stringify(users));
+                    // Only update storeShirts from cloud if we aren't currently editing or if cloud has new data
+                    const remoteShirts = data.record.shirts || [];
+                    if (remoteShirts.length !== storeShirts.length || JSON.stringify(remoteShirts) !== JSON.stringify(storeShirts)) {
+                        storeShirts = remoteShirts;
+                        deletedArchive = data.record.deletedArchive || [];
+                        currentAnnouncement = data.record.announcement || { text: "", targetTime: null, showCountdown: false, bannerColor: "red" };
+                        
+                        if (data.record.users) {
+                            users = data.record.users;
+                            localStorage.setItem('tomboytuff_users', JSON.stringify(users));
+                        }
+                        if (data.record.promos) {
+                            promoCodes = data.record.promos;
+                            localStorage.setItem('tomboytuff_promos', JSON.stringify(promoCodes));
+                        }
+                        
+                        renderAnnouncementBanner();
+                        if(document.getElementById('view-store').classList.contains('active')) {
+                            renderStoreUI();
+                            renderAdminFlashSales();
+                        }
                     }
-                    if (data.record.promos) {
-                        promoCodes = data.record.promos;
-                        localStorage.setItem('tomboytuff_promos', JSON.stringify(promoCodes));
-                    }
-                }
-                renderAnnouncementBanner();
-                if(document.getElementById('view-store').classList.contains('active')) {
-                    renderStoreUI();
-                    renderAdminFlashSales();
                 }
                 if(currentUser && users[currentUser]) {
                     updateCartUI();
@@ -450,7 +446,6 @@
                 return res.json();
             })
             .then(() => {
-                fetchCloudStore();
                 if (callback) callback();
             })
             .catch(err => {
@@ -559,6 +554,9 @@
                 storeShirts.push({ id: Date.now(), name, img: finalImg, price, stock, onSale: false, salePrice: price });
             }
 
+            renderStoreUI();
+            renderAdminFlashSales();
+
             saveCloudStore(() => {
                 document.getElementById('shirt-name').value = '';
                 document.getElementById('shirt-img-url').value = '';
@@ -576,6 +574,8 @@
             if(confirm(`Delete "${shirtToDelete.name}"?`)) {
                 deletedArchive.push(shirtToDelete);
                 storeShirts = storeShirts.filter(s => s.id !== id);
+                renderStoreUI();
+                renderAdminFlashSales();
                 saveCloudStore(() => {
                     alert("Shirt deleted successfully from cloud.");
                 });
@@ -893,7 +893,7 @@
             list.innerHTML = users[currentUser].orders.map(o => `<div class="box" style="margin-bottom:10px; padding:15px;">${o}</div>`).join('');
         }
 
-    function switchView(viewName) {
+        function switchView(viewName) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById('view-' + viewName).classList.add('active');
             document.querySelectorAll('nav a').forEach(a => a.classList.remove('active-link'));
