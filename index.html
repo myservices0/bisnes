@@ -318,8 +318,11 @@
 
             localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             localStorage.setItem('tomboytuff_current_user', currentUser);
-            saveCloudStore();
-            initializeApp();
+            
+            // Immediately sync new login state to cloud
+            saveCloudStore(() => {
+                initializeApp();
+            });
         }
 
         function initializeApp() {
@@ -338,8 +341,6 @@
             renderAdminCodes();
             renderAdminUsers();
             switchView('store');
-            
-            setInterval(fetchCloudStore, 5000);
         }
 
         function signOut() {
@@ -377,28 +378,32 @@
             reader.readAsDataURL(file);
         }
 
-        // FULL CLOUD SYNCHRONIZATION VIA JSONBIN
+        // CLOUD SYNCHRONIZATION WITH ERROR ALERTS
         function fetchCloudStore() {
             if (JSONBIN_BIN_ID === "YOUR_BIN_ID_HERE") return;
             
             fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
                 headers: { 'X-Master-Key': JSONBIN_API_KEY }
             })
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error("Failed to fetch from cloud.");
+                return res.json();
+            })
             .then(data => {
-                storeShirts = data.record.shirts || [];
-                deletedArchive = data.record.deletedArchive || [];
-                currentAnnouncement = data.record.announcement || { text: "", targetTime: null, showCountdown: false, bannerColor: "red" };
-                
-                if (data.record.users) {
-                    users = data.record.users;
-                    localStorage.setItem('tomboytuff_users', JSON.stringify(users));
+                if (data && data.record) {
+                    storeShirts = data.record.shirts || [];
+                    deletedArchive = data.record.deletedArchive || [];
+                    currentAnnouncement = data.record.announcement || { text: "", targetTime: null, showCountdown: false, bannerColor: "red" };
+                    
+                    if (data.record.users) {
+                        users = data.record.users;
+                        localStorage.setItem('tomboytuff_users', JSON.stringify(users));
+                    }
+                    if (data.record.promos) {
+                        promoCodes = data.record.promos;
+                        localStorage.setItem('tomboytuff_promos', JSON.stringify(promoCodes));
+                    }
                 }
-                if (data.record.promos) {
-                    promoCodes = data.record.promos;
-                    localStorage.setItem('tomboytuff_promos', JSON.stringify(promoCodes));
-                }
-
                 renderAnnouncementBanner();
                 if(document.getElementById('view-store').classList.contains('active')) {
                     renderStoreUI();
@@ -410,11 +415,14 @@
                     renderAdminUsers();
                 }
             })
-            .catch(err => console.log("Cloud sync error"));
+            .catch(err => console.log("Cloud sync fetch error: " + err.message));
         }
 
-        function saveCloudStore() {
-            if (JSONBIN_BIN_ID === "YOUR_BIN_ID_HERE") return;
+        function saveCloudStore(callback) {
+            if (JSONBIN_BIN_ID === "YOUR_BIN_ID_HERE") {
+                if (callback) callback();
+                return;
+            }
 
             fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
                 method: 'PUT',
@@ -430,8 +438,18 @@
                     promos: promoCodes
                 })
             })
-            .then(() => fetchCloudStore())
-            .catch(err => console.log("Error syncing to cloud database."));
+            .then(res => {
+                if (!res.ok) throw new Error("Cloud rejected the update (Status: " + res.status + ")");
+                return res.json();
+            })
+            .then(() => {
+                fetchCloudStore();
+                if (callback) callback();
+            })
+            .catch(err => {
+                alert("Cloud Sync Error: " + err.message);
+                if (callback) callback();
+            });
         }
 
         function publishAnnouncement() {
@@ -447,8 +465,9 @@
             const targetTime = totalMs > 0 ? Date.now() + totalMs : null;
 
             currentAnnouncement = { text, targetTime, showCountdown, bannerColor };
-            saveCloudStore();
-            alert("Live announcement published successfully!");
+            saveCloudStore(() => {
+                alert("Live announcement published successfully to cloud!");
+            });
         }
 
         function renderAnnouncementBanner() {
@@ -534,12 +553,13 @@
                 storeShirts.push({ id: Date.now(), name, img: finalImg, price, stock, onSale: false, salePrice: price });
             }
 
-            saveCloudStore();
-            
-            document.getElementById('shirt-name').value = '';
-            document.getElementById('shirt-img-url').value = '';
-            document.getElementById('shirt-file-input').value = '';
-            temporaryShirtImage = "";
+            saveCloudStore(() => {
+                document.getElementById('shirt-name').value = '';
+                document.getElementById('shirt-img-url').value = '';
+                document.getElementById('shirt-file-input').value = '';
+                temporaryShirtImage = "";
+                alert("Shirt published successfully to cloud!");
+            });
         }
 
         function deleteShirt(event, id) {
@@ -550,7 +570,9 @@
             if(confirm(`Delete "${shirtToDelete.name}"?`)) {
                 deletedArchive.push(shirtToDelete);
                 storeShirts = storeShirts.filter(s => s.id !== id);
-                saveCloudStore();
+                saveCloudStore(() => {
+                    alert("Shirt deleted successfully from cloud.");
+                });
             }
         }
 
@@ -607,8 +629,9 @@
             if (!isNaN(customPrice)) {
                 s.salePrice = customPrice;
             }
-            saveCloudStore();
-            alert(`Flash sale updated for ${s.name}!`);
+            saveCloudStore(() => {
+                alert(`Flash sale updated for ${s.name}!`);
+            });
         }
 
         function addPromoCode() {
@@ -620,14 +643,14 @@
             document.getElementById('new-code-name').value = '';
             document.getElementById('new-code-pct').value = '';
             renderAdminCodes();
-            saveCloudStore();
+            saveCloudStore(() => alert("Promo code added and synced!"));
         }
 
         function deletePromoCode(code) {
             delete promoCodes[code];
             localStorage.setItem('tomboytuff_promos', JSON.stringify(promoCodes));
             renderAdminCodes();
-            saveCloudStore();
+            saveCloudStore(() => alert("Promo code deleted!"));
         }
 
         function renderAdminCodes() {
@@ -646,7 +669,7 @@
             users[username].banned = !users[username].banned;
             localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             renderAdminUsers();
-            saveCloudStore();
+            saveCloudStore(() => alert(`User status updated for ${username}.`));
         }
 
         function renderAdminUsers() {
@@ -878,7 +901,11 @@
         }
 
         window.onload = function() {
-            if (currentUser && users[currentUser]) initializeApp();
+            if (currentUser && users[currentUser]) {
+                initializeApp();
+            } else {
+                fetchCloudStore();
+            }
             setInterval(() => {
                 if(document.getElementById('view-store').classList.contains('active')) {
                     renderStoreUI();
