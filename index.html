@@ -87,6 +87,11 @@
     </header>
 
     <main>
+        <!-- Live Announcement Banner -->
+        <div id="live-announcement-banner" style="display:none; background:var(--accent); color:#fff; text-align:center; padding:12px; font-weight:bold; font-size:0.95rem; margin-bottom:20px; border-radius:4px;">
+            <span id="banner-text"></span> — <span id="banner-countdown"></span>
+        </div>
+
         <!-- Store View -->
         <div id="view-store" class="view active">
             <div id="owner-panel" class="owner-panel" style="display:none;">
@@ -113,6 +118,18 @@
                         <div id="admin-codes-list" style="max-height: 100px; overflow-y: auto;"></div>
                     </div>
                 </div>
+
+                <div style="border-top: 1px solid var(--border); margin-top: 20px; padding-top: 20px;">
+                    <h4 style="margin-bottom:10px;">Live Text & Countdown Banner</h4>
+                    <input type="text" id="owner-announcement-text" placeholder="Announcement message...">
+                    <div style="display:flex; gap:10px; margin-bottom:10px;">
+                        <input type="number" id="ann-days" placeholder="Days" min="0" style="width:33%;">
+                        <input type="number" id="ann-hours" placeholder="Hours" min="0" max="23" style="width:33%;">
+                        <input type="number" id="ann-mins" placeholder="Minutes" min="0" max="59" style="width:33%;">
+                    </div>
+                    <button type="button" onclick="publishAnnouncement()" style="width:100%; padding:10px; background:var(--accent); color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Publish Live Announcement</button>
+                </div>
+
                 <div style="border-top: 1px solid var(--border); margin-top: 20px; padding-top: 20px;">
                     <h4 style="margin-bottom:10px;">Manage Users (Search & Ban)</h4>
                     <input type="text" id="user-search-input" placeholder="Search usernames..." onkeyup="renderAdminUsers()" style="margin-bottom: 10px;">
@@ -251,6 +268,9 @@
         let currentUser = localStorage.getItem('tomboytuff_current_user');
         
         let storeShirts = [];
+        let currentAnnouncement = { text: "", targetTime: null };
+        let countdownInterval = null;
+
         let promoCodes = JSON.parse(localStorage.getItem('tomboytuff_promos')) || { "TOMBOYTUFF": 10 };
         
         let temporaryShirtImage = ""; // Holds file selection from PC
@@ -343,6 +363,8 @@
             .then(res => res.json())
             .then(data => {
                 storeShirts = data.record.shirts || [];
+                currentAnnouncement = data.record.announcement || { text: "", targetTime: null };
+                renderAnnouncementBanner();
                 if(document.getElementById('view-store').classList.contains('active')) {
                     renderStoreUI();
                 }
@@ -358,10 +380,58 @@
                     'Content-Type': 'application/json',
                     'X-Master-Key': JSONBIN_API_KEY
                 },
-                body: JSON.stringify({ shirts: storeShirts })
+                body: JSON.stringify({ shirts: storeShirts, announcement: currentAnnouncement })
             })
             .then(() => fetchCloudStore())
             .catch(err => alert("Error saving to cloud database."));
+        }
+
+        function publishAnnouncement() {
+            if (currentUser !== 'owner') return;
+            const text = document.getElementById('owner-announcement-text').value;
+            const days = parseInt(document.getElementById('ann-days').value) || 0;
+            const hours = parseInt(document.getElementById('ann-hours').value) || 0;
+            const mins = parseInt(document.getElementById('ann-mins').value) || 0;
+
+            const totalMs = ((days * 24 * 60) + (hours * 60) + mins) * 60 * 1000;
+            const targetTime = totalMs > 0 ? Date.now() + totalMs : null;
+
+            currentAnnouncement = { text, targetTime };
+            saveCloudStore();
+            alert("Live announcement published successfully!");
+        }
+
+        function renderAnnouncementBanner() {
+            const banner = document.getElementById('live-announcement-banner');
+            if (!currentAnnouncement.text && !currentAnnouncement.targetTime) {
+                banner.style.display = 'none';
+                return;
+            }
+            banner.style.display = 'block';
+            document.getElementById('banner-text').innerText = currentAnnouncement.text || "";
+
+            if (countdownInterval) clearInterval(countdownInterval);
+
+            if (currentAnnouncement.targetTime) {
+                function updateTimer() {
+                    const now = Date.now();
+                    const diff = currentAnnouncement.targetTime - now;
+                    const cdElem = document.getElementById('banner-countdown');
+                    if (diff <= 0) {
+                        cdElem.innerText = "EXPIRED";
+                        return;
+                    }
+                    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const s = Math.floor((diff % (1000 * 60)) / 1000);
+                    cdElem.innerText = `${d}d ${h}h ${m}m ${s}s remaining`;
+                }
+                updateTimer();
+                countdownInterval = setInterval(updateTimer, 1000);
+            } else {
+                document.getElementById('banner-countdown').innerText = '';
+            }
         }
 
         function addShirt() {
@@ -372,7 +442,6 @@
             
             if(!name) return alert("Shirt Name is required");
             
-            // Prioritize PC file upload if selected, otherwise use link/URL, otherwise fallback placeholder
             const finalImg = temporaryShirtImage || urlInput || 'https://via.placeholder.com/300x300?text=No+Image';
             
             storeShirts.push({ id: Date.now(), name, img: finalImg, price, stock });
