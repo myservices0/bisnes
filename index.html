@@ -221,7 +221,7 @@
         </div>
     </main>
 
-    <!-- Product Detail Modal -->
+    <!-- Product Detail Modal (Size selection, stock, price, buy/cart) -->
     <div id="product-modal" class="modal-overlay">
         <div class="modal-content">
             <button class="modal-close" onclick="closeModal('product-modal')">&times;</button>
@@ -267,7 +267,7 @@
 
     <script>
         // -------------------------------------------------------------------------
-        // SUPABASE CLOUD CONFIGURATION (Unlimited Business Storage)
+        // SUPABASE CLOUD CONFIGURATION
         // -------------------------------------------------------------------------
         const SUPABASE_URL = 'https://ouwpxjjrmtxdjzompqhj.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91d3B4ampybXR4ZGp6b21wcWhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwOTA3NjgsImV4cCI6MjEwNTY2Njc2OH0.EQHnwm492qwZ0mc6kf5Lfv9ztpkE5Tn0HtAdjyHY4-k';
@@ -283,7 +283,7 @@
 
         let promoCodes = JSON.parse(localStorage.getItem('tomboytuff_promos')) || { "TOMBOYTUFF": 10 };
         
-        let temporaryShirtFile = null; // Holds raw image file from PC
+        let temporaryShirtFile = null;
         let selectedShirtId = null;
         let checkoutTotal = 0;
         let activeDiscountPct = 0;
@@ -356,7 +356,6 @@
             temporaryShirtFile = event.target.files[0];
         }
 
-        // FETCH STORE DATA FROM SUPABASE DATABASE TABLE OR CLOUD
         async function fetchCloudStore() {
             try {
                 const { data, error } = await supabaseClient
@@ -379,7 +378,6 @@
             }
         }
 
-        // SAVE STORE DATA TO SUPABASE
         async function saveCloudStore() {
             try {
                 await supabaseClient
