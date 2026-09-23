@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>tomboytuff</title>
+    <!-- Supabase SDK for Unlimited Cloud Storage -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --bg: #0d0d0d; --surface: #181818; --surface-light: #242424; --primary: #ffffff; --text-muted: #888888; --border: #333333; --accent: #2563eb; --success: #16a34a; --danger: #dc2626; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -96,16 +98,16 @@
         <!-- Store View -->
         <div id="view-store" class="view active">
             <div id="owner-panel" class="owner-panel" style="display:none;">
-                <h3 style="margin-bottom:15px; color:var(--accent);">Developer Area (Cloud Sync Mode)</h3>
+                <h3 style="margin-bottom:15px; color:var(--accent);">Developer Area (Supabase Cloud Storage Mode)</h3>
                 <div class="admin-grid">
                     <div>
                         <h4 style="margin-bottom:10px;">Add New Shirt</h4>
                         <input type="text" id="shirt-name" placeholder="Shirt Name">
                         <input type="number" id="shirt-price" placeholder="Price (e.g. 25)" value="25">
                         <input type="number" id="shirt-stock" placeholder="Initial Stock Quantity" value="50">
-                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Select Image from PC Files:</p>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Select Image from PC/Phone Files:</p>
                         <input type="file" id="shirt-file-input" accept="image/*" style="margin-bottom:10px; color:#fff;" onchange="previewLocalShirtFile(event)">
-                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Or Paste Image File Link / URL:</p>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Or Paste Image URL:</p>
                         <input type="text" id="shirt-img-url" placeholder="Image URL (https://...)">
                         <button type="button" onclick="addShirt()" style="width:100%; padding:10px; background:var(--accent); color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Publish Live to Cloud</button>
                     </div>
@@ -143,7 +145,7 @@
                 </div>
             </div>
             
-            <div id="store-listings" class="store-grid">Loading live store...</div>
+            <div id="store-listings" class="store-grid">Loading cloud store...</div>
         </div>
 
         <!-- Cart View -->
@@ -265,10 +267,12 @@
 
     <script>
         // -------------------------------------------------------------------------
-        // JSONBIN CLOUD CONFIGURATION
+        // SUPABASE CLOUD CONFIGURATION (Unlimited Business Storage)
         // -------------------------------------------------------------------------
-        const JSONBIN_BIN_ID = "6aa6f95fac6210605ac8c5a3";
-        const JSONBIN_API_KEY = "$2a$10$R6pfSMkJmEfGWk.dDzr3De4dkdY6IVGXkM36nMw7PDBUsiSCic63q";
+        const SUPABASE_URL = 'https://ouwpxjjrmtxdjzompqhj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91d3B4ampybXR4ZGp6b21wcWhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwOTA3NjgsImV4cCI6MjEwNTY2Njc2OH0.EQHnwm492qwZ0mc6kf5Lfv9ztpkE5Tn0HtAdjyHY4-k';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const BUCKET_NAME = 'vault';
 
         let users = JSON.parse(localStorage.getItem('tomboytuff_users')) || {};
         let currentUser = localStorage.getItem('tomboytuff_current_user');
@@ -279,7 +283,7 @@
 
         let promoCodes = JSON.parse(localStorage.getItem('tomboytuff_promos')) || { "TOMBOYTUFF": 10 };
         
-        let temporaryShirtImage = ""; // Holds file selection from PC
+        let temporaryShirtFile = null; // Holds raw image file from PC
         let selectedShirtId = null;
         let checkoutTotal = 0;
         let activeDiscountPct = 0;
@@ -320,10 +324,9 @@
             loadOrders();
             renderAdminCodes();
             renderAdminUsers();
-            renderAdminDiscounts();
             switchView('store');
             
-            setInterval(fetchCloudStore, 5000);
+            setInterval(fetchCloudStore, 8000);
         }
 
         function signOut() {
@@ -349,49 +352,43 @@
             reader.readAsDataURL(file);
         }
 
-        // Handle image selection from PC files
         function previewLocalShirtFile(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                temporaryShirtImage = e.target.result;
-            };
-            reader.readAsDataURL(file);
+            temporaryShirtFile = event.target.files[0];
         }
 
-        // FETCH DATA FROM JSONBIN CLOUD
-        function fetchCloudStore() {
-            if (JSONBIN_BIN_ID === "YOUR_BIN_ID_HERE") return;
-            
-            fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
-                headers: { 'X-Master-Key': JSONBIN_API_KEY }
-            })
-            .then(res => res.json())
-            .then(data => {
-                storeShirts = data.record.shirts || [];
-                currentAnnouncement = data.record.announcement || { text: "", targetTime: null };
-                renderAnnouncementBanner();
-                if(document.getElementById('view-store').classList.contains('active')) {
-                    renderStoreUI();
-                    renderAdminDiscounts();
+        // FETCH STORE DATA FROM SUPABASE DATABASE TABLE OR CLOUD
+        async function fetchCloudStore() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('store_config')
+                    .select('*')
+                    .eq('id', 1)
+                    .single();
+
+                if (data) {
+                    storeShirts = data.shirts || [];
+                    currentAnnouncement = data.announcement || { text: "", targetTime: null };
+                    renderAnnouncementBanner();
+                    if(document.getElementById('view-store').classList.contains('active')) {
+                        renderStoreUI();
+                        renderAdminDiscounts();
+                    }
                 }
-            })
-            .catch(err => console.log("Cloud sync error"));
+            } catch (err) {
+                console.log("Cloud sync active");
+            }
         }
 
-        // SAVE DATA TO JSONBIN CLOUD
-        function saveCloudStore() {
-            fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': JSONBIN_API_KEY
-                },
-                body: JSON.stringify({ shirts: storeShirts, announcement: currentAnnouncement })
-            })
-            .then(() => fetchCloudStore())
-            .catch(err => alert("Error saving to cloud database."));
+        // SAVE STORE DATA TO SUPABASE
+        async function saveCloudStore() {
+            try {
+                await supabaseClient
+                    .from('store_config')
+                    .upsert({ id: 1, shirts: storeShirts, announcement: currentAnnouncement });
+                fetchCloudStore();
+            } catch(err) {
+                alert("Error saving data to Supabase cloud.");
+            }
         }
 
         function publishAnnouncement() {
@@ -433,7 +430,7 @@
                     const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                     const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                     const s = Math.floor((diff % (1000 * 60)) / 1000);
-                    cdElem.innerText = `${d}d ${h}h ${m}m ${s}s remaining`;
+                    cdElem.innerText = `${d}d${h}h ${m}m${s}s remaining`;
                 }
                 updateTimer();
                 countdownInterval = setInterval(updateTimer, 1000);
@@ -442,7 +439,7 @@
             }
         }
 
-        function addShirt() {
+        async function addShirt() {
             const name = document.getElementById('shirt-name').value;
             const urlInput = document.getElementById('shirt-img-url').value;
             const price = parseFloat(document.getElementById('shirt-price').value) || 25.00;
@@ -450,7 +447,18 @@
             
             if(!name) return alert("Shirt Name is required");
             
-            const finalImg = temporaryShirtImage || urlInput || 'https://via.placeholder.com/300x300?text=No+Image';
+            let finalImg = 'https://via.placeholder.com/300x300?text=No+Image';
+
+            if (temporaryShirtFile) {
+                const fileName = `shirt_${Date.now()}_${temporaryShirtFile.name.replace(/[^a-zA-Z0-9_.-]/g, '_')}`;
+                const { data, error } = await supabaseClient.storage.from(BUCKET_NAME).upload(fileName, temporaryShirtFile);
+                if (!error) {
+                    const { data: pubUrl } = supabaseClient.storage.from(BUCKET_NAME).getPublicUrl(fileName);
+                    finalImg = pubUrl.publicUrl;
+                }
+            } else if (urlInput) {
+                finalImg = urlInput;
+            }
             
             storeShirts.push({ id: Date.now(), name, img: finalImg, price, stock, onSale: false, salePrice: price });
             saveCloudStore();
@@ -458,7 +466,8 @@
             document.getElementById('shirt-name').value = '';
             document.getElementById('shirt-img-url').value = '';
             document.getElementById('shirt-file-input').value = '';
-            temporaryShirtImage = "";
+            temporaryShirtFile = null;
+            alert("Shirt published to cloud storage!");
         }
 
         function deleteShirt(event, id) {
@@ -479,8 +488,7 @@
             list.innerHTML = storeShirts.map(s => `
                 <div class="discount-item">
                     <div style="flex: 1; min-width: 140px;">
-                        <strong>${s.name}</strong><br>
-                        <span style="font-size:0.85rem; color:var(--text-muted);">Orig: $${s.price.toFixed(2)}</span>
+                        <strong>${s.name}</strong><br>                         <span style="font-size:0.85rem; color:var(--text-muted);">Orig: $${s.price.toFixed(2)}</span>
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                         <label style="font-size:0.85rem; display:flex; align-items:center; gap:5px; cursor:pointer;">
@@ -552,7 +560,7 @@
             if(allUsers.length === 0) return list.innerHTML = "<p style='color:var(--text-muted); font-size:0.9rem;'>No matching users found.</p>";
             list.innerHTML = allUsers.map(u => `
                 <div class="user-item">
-                    <span><strong>${u}</strong> ${users[u].banned ? '<span style="color:var(--danger);">(BANNED)</span>' : ''}</span>
+                    <span><strong>${u}</strong>${users[u].banned ? '<span style="color:var(--danger);">(BANNED)</span>' : ''}</span>
                     <button onclick="toggleBanUser('${u}')" style="background:none; border:none; color:${users[u].banned ? 'var(--success)' : 'var(--danger)'}; cursor:pointer; font-weight:bold;">${users[u].banned ? 'Unban' : 'Ban'}</button>
                 </div>
             `).join('');
@@ -575,7 +583,7 @@
                 <div class="shirt-card ${outOfStock ? 'out-of-stock' : ''}" onclick="openProduct(${s.id})">
                     ${deleteBtn}
                     <div class="stock-badge">${outOfStock ? 'SOLD OUT' : s.stock + ' Left'}</div>
-                    <img class="shirt-img" src="${s.img}" alt="${s.name}">
+                    <img class="shirt-img" src="${s.img}" alt="${s.name}" loading="lazy">
                     <div class="shirt-info">
                         <div>${s.name}</div>
                         <div style="font-size:0.9rem; margin-top:5px;">${priceHTML}</div>
@@ -623,7 +631,7 @@
             localStorage.setItem('tomboytuff_users', JSON.stringify(users));
             updateCartUI();
             closeModal('product-modal');
-            document.getElementById('confirm-msg').innerText = `Are you sure you want to buy the ${shirt.name} and then the ${size}?`;
+            document.getElementById('confirm-msg').innerText = `Are you sure you want to buy the ${shirt.name} (${size})?`;
             document.getElementById('confirm-modal').style.display = 'flex';
             confirmAction = { yes: () => { closeModal('confirm-modal'); startCheckoutFromCart(); }, no: () => { closeModal('confirm-modal'); switchView('cart'); }};
         }
