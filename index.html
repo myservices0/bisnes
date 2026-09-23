@@ -33,9 +33,9 @@
         .store-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; margin-top: 20px; }
         .shirt-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; cursor: pointer; transition: transform 0.2s; position: relative; }
         .shirt-card:hover { transform: translateY(-3px); border-color: #555; }
-        .shirt-img { width: 100%; height: 250px; object-fit: cover; background: #111; }
+        .shirt-img { width: 100%; height: 250px; object-fit: cover; background: #111; opacity: 1 !important; display: block; }
         .shirt-info { padding: 15px; text-align: center; font-weight: 600; font-size: 1.1rem; }
-        .stock-badge { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; border: 1px solid var(--border); }
+        .stock-badge { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; border: 1px solid var(--border); z-index: 10; }
         .out-of-stock { opacity: 0.6; }
         .out-of-stock .shirt-img, .out-of-stock .shirt-info { pointer-events: none; }
         .delete-shirt-btn { position: absolute; top: 10px; left: 10px; background: var(--danger); color: #fff; border: none; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; z-index: 20; pointer-events: auto; }
@@ -227,7 +227,7 @@
             <button class="modal-close" onclick="closeModal('product-modal')">&times;</button>
             <h2 id="modal-shirt-name" style="margin-bottom:5px;">Shirt Name</h2>
             <p id="modal-shirt-stock-display" style="color:var(--success); font-size:0.85rem; margin-bottom:15px;">In Stock</p>
-            <img id="modal-shirt-img" src="" style="width:100%; height:250px; object-fit:cover; border-radius:4px; background:#111; margin-bottom:15px;">
+            <img id="modal-shirt-img" src="" style="width:100%; height:250px; object-fit:cover; border-radius:4px; background:#111; margin-bottom:15px; opacity:1 !important;">
             <p style="font-size:1.2rem; font-weight:bold; margin-bottom:10px;" id="modal-price-container">$<span id="modal-shirt-price">0.00</span></p>
             <label style="color:var(--text-muted); font-size:0.9rem;">Select Size:</label>
             <select id="size-select" class="size-selector">
