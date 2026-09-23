@@ -34,7 +34,7 @@
         .shirt-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; cursor: pointer; transition: transform 0.2s; position: relative; }
         .shirt-card:hover { transform: translateY(-3px); border-color: #555; }
         
-        /* SHOW ENTIRE IMAGE (NO CROPPING) */
+        /* FULL IMAGE CONTAINER (NO CROPPING) */
         .shirt-img-container { width: 100%; height: 260px; background: #000; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
         .shirt-img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; opacity: 1 !important; visibility: visible !important; }
         
@@ -48,13 +48,13 @@
         .modal-content { background: var(--surface); border: 1px solid var(--border); padding: 25px; border-radius: 8px; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; text-align: center; }
         .modal-close { float: right; background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; line-height: 1; }
         
-        /* IMAGE CAROUSEL (SWIPE / BUTTON VIEW) */
-        .carousel-box { position: relative; width: 100%; height: 280px; background: #000; border-radius: 4px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; overflow: hidden; }
-        .carousel-img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        /* TOUCH SWIPE CAROUSEL */
+        .carousel-box { position: relative; width: 100%; height: 280px; background: #000; border-radius: 4px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; overflow: hidden; touch-action: pan-y; }
+        .carousel-img { max-width: 100%; max-height: 100%; object-fit: contain; pointer-events: none; }
         .carousel-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color: #fff; border: 1px solid var(--border); padding: 10px 12px; cursor: pointer; font-weight: bold; border-radius: 4px; z-index: 10; }
         .carousel-prev { left: 10px; }
         .carousel-next { right: 10px; }
-        .carousel-indicators { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px; }
+        .carousel-indicators { font-size: 0.9rem; font-weight: bold; color: var(--primary); margin-bottom: 15px; background: var(--surface-light); display: inline-block; padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border); }
 
         .size-selector { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); color: #fff; margin: 15px 0; border-radius: 4px; font-size: 1rem; text-align: left; }
         .btn-group { display: flex; gap: 10px; margin-top: 20px; }
@@ -110,7 +110,7 @@
         <!-- Store View -->
         <div id="view-store" class="view active">
             <div id="owner-panel" class="owner-panel" style="display:none;">
-                <h3 style="margin-bottom:15px; color:var(--accent);">Developer Area (Dual-Image Cloud Storage)</h3>
+                <h3 style="margin-bottom:15px; color:var(--accent);">Developer Area (Swipe Carousel & Cloud Storage)</h3>
                 <div class="admin-grid">
                     <div>
                         <h4 style="margin-bottom:10px;">Add New Item (Up to 2 Images)</h4>
@@ -118,10 +118,10 @@
                         <input type="number" id="shirt-price" placeholder="Price (e.g. 25)" value="25">
                         <input type="number" id="shirt-stock" placeholder="Initial Stock" value="50">
                         
-                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:3px;">Image 1 (Front View):</p>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:3px;">Image 1 (Front View - Required):</p>
                         <input type="file" id="shirt-file-1" accept="image/*" style="margin-bottom:8px; color:#fff;" onchange="previewFile(1)">
                         
-                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:3px;">Image 2 (Back / Alternate View - Optional):</p>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:3px;">Image 2 (Back View - Optional):</p>
                         <input type="file" id="shirt-file-2" accept="image/*" style="margin-bottom:12px; color:#fff;" onchange="previewFile(2)">
 
                         <button type="button" onclick="addShirt()" style="width:100%; padding:10px; background:var(--accent); color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Publish Live to Cloud</button>
@@ -243,13 +243,13 @@
             <h2 id="modal-shirt-name" style="margin-bottom:5px;">Shirt Name</h2>
             <p id="modal-shirt-stock-display" style="color:var(--success); font-size:0.85rem; margin-bottom:10px;">In Stock</p>
             
-            <!-- Image Carousel Container -->
+            <!-- Swipeable Image Carousel Container -->
             <div class="carousel-box" id="carousel-box">
                 <button class="carousel-btn carousel-prev" id="prev-btn" onclick="slideImage(-1)">❮</button>
                 <img id="modal-shirt-img" class="carousel-img" src="">
                 <button class="carousel-btn carousel-next" id="next-btn" onclick="slideImage(1)">❯</button>
             </div>
-            <div class="carousel-indicators" id="carousel-indicators">Photo 1 of 2</div>
+            <div class="carousel-indicators" id="carousel-indicators">1 of 1</div>
 
             <p style="font-size:1.2rem; font-weight:bold; margin-bottom:10px;" id="modal-price-container">$<span id="modal-shirt-price">0.00</span></p>
             <label style="color:var(--text-muted); font-size:0.9rem; display:block; text-align:left;">Select Size:</label>
@@ -474,7 +474,6 @@
 
             let imageUrls = [];
 
-            // Upload Image 1
             const file1Name = `item1_${Date.now()}_${temporaryFile1.name.replace(/[^a-zA-Z0-9_.-]/g, '_')}`;
             const { error: err1 } = await supabaseClient.storage.from(BUCKET_NAME).upload(file1Name, temporaryFile1);
             if (!err1) {
@@ -482,7 +481,6 @@
                 imageUrls.push(pub1.data.publicUrl);
             }
 
-            // Upload Image 2 if provided
             if (temporaryFile2) {
                 const file2Name = `item2_${Date.now()}_${temporaryFile2.name.replace(/[^a-zA-Z0-9_.-]/g, '_')}`;
                 const { error: err2 } = await supabaseClient.storage.from(BUCKET_NAME).upload(file2Name, temporaryFile2);
@@ -607,7 +605,6 @@
                 const outOfStock = s.stock <= 0;
                 const deleteBtn = (currentUser === 'owner') ? `<button class="delete-shirt-btn" onclick="deleteShirt(event, ${s.id})">Delete</button>` : ``;
                 
-                // Handle backwards compatibility if item only has single .img string instead of .images array
                 let imgList = s.images && s.images.length > 0 ? s.images : [s.img || 'https://via.placeholder.com/300x300?text=No+Image'];
                 let displayImg = imgList[0];
 
@@ -660,7 +657,7 @@
             const nextBtn = document.getElementById('next-btn');
 
             imgElem.src = currentActiveShirtImages[activeImageIndex];
-            indElem.innerText = `Photo ${activeImageIndex + 1} of ${currentActiveShirtImages.length}`;
+            indElem.innerText = `${activeImageIndex + 1} of ${currentActiveShirtImages.length}`;
 
             if (currentActiveShirtImages.length <= 1) {
                 prevBtn.style.display = 'none';
@@ -676,6 +673,33 @@
             if (activeImageIndex < 0) activeImageIndex = currentActiveShirtImages.length - 1;
             if (activeImageIndex >= currentActiveShirtImages.length) activeImageIndex = 0;
             updateCarouselView();
+        }
+
+        // --- TOUCH SWIPE EVENT LISTENERS ---
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const carouselBox = document.getElementById('carousel-box');
+
+        carouselBox.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, {passive: true});
+
+        carouselBox.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipeGesture();
+        }, {passive: true});
+
+        function handleSwipeGesture() {
+            if (currentActiveShirtImages.length <= 1) return;
+            const threshold = 40; // minimum distance for swipe
+            if (touchEndX < touchStartX - threshold) {
+                // Swiped Left -> Next Image
+                slideImage(1);
+            }
+            if (touchEndX > touchStartX + threshold) {
+                // Swiped Right -> Previous Image
+                slideImage(-1);
+            }
         }
 
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
