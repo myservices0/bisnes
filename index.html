@@ -129,8 +129,10 @@
                 <p class="tt-auth-subtitle" id="tt-auth-description">Sign in with your username and password.</p>
                 <form class="auth-form" id="tt-auth-form" onsubmit="event.preventDefault(); submitAuth();">
                     <div>
-                        <label class="tt-auth-label" for="input-username">Username</label>
-                        <input type="text" id="input-username" placeholder="Enter your username" autocomplete="username" minlength="3" maxlength="24" required>
+                        <label class="tt-auth-label" id="tt-login-username-label" for="input-username">Username</label>
+                        <input type="text" id="input-username" name="login-username" placeholder="Enter your username" autocomplete="username" minlength="3" maxlength="24" required>
+                        <label class="tt-auth-label tt-auth-hidden" id="tt-signup-username-label" for="input-signup-username">Choose a username</label>
+                        <input type="text" id="input-signup-username" name="new-account-username" class="tt-auth-hidden" placeholder="Choose your username" autocomplete="off" minlength="3" maxlength="24">
                     </div>
                     <div>
                         <label class="tt-auth-label" for="input-password">Password</label>
@@ -393,7 +395,9 @@
 
         function setAuthMode(mode) {
             if (!['login', 'signup'].includes(mode)) return;
-            const usernameInput = document.getElementById('input-username');
+            const loginUsernameInput = document.getElementById('input-username');
+            const signupUsernameInput = document.getElementById('input-signup-username');
+            const isSignup = mode === 'signup';
             ttAuthMode = mode;
             document.querySelectorAll('.tt-auth-tab').forEach(tab => {
                 const selected = tab.id === 'tt-tab-' + mode;
@@ -408,9 +412,18 @@
             document.getElementById('tt-auth-description').textContent = content[1];
             document.getElementById('tt-auth-submit').textContent = content[2];
             document.getElementById('tt-auth-note').textContent = content[3];
-            document.getElementById('tt-auth-confirm').classList.toggle('tt-auth-hidden', mode !== 'signup');
-            document.getElementById('input-confirm-password').required = mode === 'signup';
-            document.getElementById('input-password').autocomplete = mode === 'signup' ? 'new-password' : 'current-password';
+            // Use an independent, empty registration field. Never copy a sign-in
+            // username (including the owner's) into Create account.
+            document.getElementById('tt-login-username-label').classList.toggle('tt-auth-hidden', isSignup);
+            document.getElementById('tt-signup-username-label').classList.toggle('tt-auth-hidden', !isSignup);
+            loginUsernameInput.classList.toggle('tt-auth-hidden', isSignup);
+            signupUsernameInput.classList.toggle('tt-auth-hidden', !isSignup);
+            loginUsernameInput.required = !isSignup;
+            signupUsernameInput.required = isSignup;
+            if (isSignup) signupUsernameInput.value = '';
+            document.getElementById('tt-auth-confirm').classList.toggle('tt-auth-hidden', !isSignup);
+            document.getElementById('input-confirm-password').required = isSignup;
+            document.getElementById('input-password').autocomplete = isSignup ? 'new-password' : 'current-password';
             document.getElementById('input-password').value = '';
             document.getElementById('input-confirm-password').value = '';
             showAuthError('');
@@ -443,7 +456,8 @@
         async function submitAuth() {
             const button = document.getElementById('tt-auth-submit');
             if (button.disabled) return;
-            const username = document.getElementById('input-username').value.trim();
+            const usernameField = ttAuthMode === 'signup' ? 'input-signup-username' : 'input-username';
+            const username = document.getElementById(usernameField).value.trim();
             const password = document.getElementById('input-password').value;
             const confirmPassword = document.getElementById('input-confirm-password').value;
             showAuthError('');
