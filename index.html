@@ -73,19 +73,84 @@
         .box { background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: 8px; line-height: 1.6; text-align: left; }
         .code-item, .user-item, .discount-item { display: flex; justify-content: space-between; background: var(--bg); padding: 10px; border: 1px solid var(--border); margin-bottom: 8px; border-radius: 4px; align-items: center; flex-wrap: wrap; gap: 10px; }
         .profile-layout { display:flex; gap:20px; align-items:center; flex-wrap: wrap; justify-content: center; text-align: center; }
+
+        /* Username sign-in and registration (store styles unchanged) */
+        #auth-overlay { overflow-y:auto; background:radial-gradient(ellipse at 15% 10%,rgba(36,89,194,.22),transparent 45%),#080b12; padding:24px; }
+        #auth-overlay .auth-card { max-width:920px; min-height:520px; display:grid; grid-template-columns: .94fr 1fr; padding:0; border:1px solid #303746; border-radius:20px; overflow:hidden; text-align:left; box-shadow:0 25px 100px rgba(0,0,0,.55); }
+        .tt-auth-brand { padding:46px 42px; display:flex; flex-direction:column; justify-content:space-between; background:linear-gradient(155deg,#152c56 0%,#111d35 44%,#11131b 100%); border-right:1px solid rgba(255,255,255,.08); }
+        .tt-auth-wordmark { font-size:1.15rem; font-weight:800; letter-spacing:.6px; color:#fff; }
+        .tt-auth-brand h2 { text-transform:none; letter-spacing:-1.25px; font-size:clamp(2.25rem,3.6vw,3.2rem); line-height:1.08; font-weight:800; margin:0 0 16px; }
+        .tt-auth-brand p { color:#c2cede; font-size:.97rem; line-height:1.7; max-width:300px; }
+        .tt-auth-brand-foot { display:flex; gap:10px; align-items:center; color:#b9c7dd; font-size:.78rem; }
+        .tt-auth-brand-foot span { display:inline-block; height:7px; width:7px; border-radius:50%; background:#5fb7ff; box-shadow:0 0 14px #5fb7ff; }
+        .tt-auth-main { padding:38px 42px 34px; display:flex; flex-direction:column; justify-content:center; }
+        .tt-auth-tabs { display:grid; grid-template-columns:repeat(2,1fr); gap:5px; padding:5px; background:#10141d; border:1px solid #2b3442; border-radius:11px; margin-bottom:28px; }
+        .tt-auth-tab { color:#aab4c5; font-size:.82rem; background:transparent; border:0; border-radius:8px; padding:11px 6px; font-weight:700; cursor:pointer; }
+        .tt-auth-tab.active { color:white; background:#2b4f90; box-shadow:0 2px 12px rgba(0,0,0,.28); }
+        .tt-auth-title { font-size:1.6rem; font-weight:800; margin:0 0 6px; letter-spacing:-.6px; }
+        .tt-auth-subtitle { color:#aab3c1; font-size:.91rem; line-height:1.5; margin:0 0 24px; }
+        #auth-overlay .auth-form { gap:15px; }
+        .tt-auth-label { display:block; font-size:.81rem; font-weight:700; margin-bottom:7px; color:#d7deea; }
+        #auth-overlay .auth-form input { background:#0f131c; border:1px solid #364153; border-radius:9px; padding:13px 14px; font-size:.96rem; color:#fff; transition:border-color .2s,box-shadow .2s; }
+        #auth-overlay .auth-form input:focus { border-color:#75aaff; box-shadow:0 0 0 3px rgba(37,99,235,.15); }
+        #auth-overlay .auth-form input[readonly] { color:#bac5d5; background:#171b24; }
+        .tt-auth-pass-wrap { display:flex; position:relative; }
+        .tt-auth-pass-wrap input { padding-right:72px !important; }
+        .tt-auth-show { position:absolute; right:6px; top:50%; transform:translateY(-50%); background:transparent !important; color:#a6b6cc !important; padding:8px !important; border:0 !important; font-size:.78rem !important; font-weight:700; cursor:pointer; }
+        #auth-overlay .tt-auth-submit { margin-top:7px; width:100%; padding:14px; border-radius:9px; background:#2e65ce; color:#fff; border:0; font-size:.95rem; font-weight:800; cursor:pointer; }
+        #auth-overlay .tt-auth-submit:hover { background:#3976e6; }
+        #auth-overlay .tt-auth-submit:disabled { opacity:.55; cursor:wait; }
+        .tt-auth-error { display:none; border:1px solid #7c3940; border-radius:8px; background:#32191f; color:#ffbec4; padding:11px 12px; font-size:.85rem; line-height:1.5; }
+        .tt-auth-note { font-size:.79rem; line-height:1.5; color:#8591a5; margin-top:16px; text-align:center; }
+        .tt-auth-hidden { display:none !important; }
+        @media(max-width:700px) { #auth-overlay { padding:12px; align-items:flex-start; } #auth-overlay .auth-card { grid-template-columns:1fr; max-width:460px; min-height:0; margin:auto; } .tt-auth-brand { padding:23px 24px; gap:17px; } .tt-auth-brand h2 { font-size:1.8rem; margin-bottom:6px; } .tt-auth-brand p { font-size:.85rem; } .tt-auth-brand-foot { display:none; } .tt-auth-main { padding:25px 23px 28px; } .tt-auth-tabs { margin-bottom:22px; } }
+        @media(max-width:380px) { .tt-auth-tab { font-size:.73rem; } .tt-auth-main { padding:23px 17px; } }
     </style>
 </head>
 <body>
 
-    <!-- Auth Modal -->
+    <!-- Username-only account sign-in and registration -->
     <div id="auth-overlay">
         <div class="auth-card">
-            <h2>tomboytuff</h2>
-            <div class="auth-form">
-                <input type="text" id="input-username" placeholder="Username" autocomplete="off" required>
-                <input type="password" id="input-password" placeholder="Password" autocomplete="off" required>
-                <button type="button" onclick="submitAuth()">Enter Website</button>
-            </div>
+            <section class="tt-auth-brand" aria-label="Tomboy Tuff welcome">
+                <div class="tt-auth-wordmark">Tomboy Tuff®</div>
+                <div>
+                    <h2>Welcome to<br>Tomboy Tuff®</h2>
+                    <p>Sign in to shop, view your orders, and manage your profile.</p>
+                </div>
+                <div class="tt-auth-brand-foot"><span></span> Your store. Your account.</div>
+            </section>
+            <section class="tt-auth-main">
+                <div class="tt-auth-tabs" role="tablist" aria-label="Account options">
+                    <button type="button" class="tt-auth-tab active" role="tab" aria-selected="true" id="tt-tab-login" onclick="setAuthMode('login')">Sign in</button>
+                    <button type="button" class="tt-auth-tab" role="tab" aria-selected="false" id="tt-tab-signup" onclick="setAuthMode('signup')">Create account</button>
+                </div>
+                <h3 class="tt-auth-title" id="tt-auth-heading">Welcome back</h3>
+                <p class="tt-auth-subtitle" id="tt-auth-description">Sign in with your username and password.</p>
+                <form class="auth-form" id="tt-auth-form" onsubmit="event.preventDefault(); submitAuth();">
+                    <div>
+                        <label class="tt-auth-label" for="input-username">Username</label>
+                        <input type="text" id="input-username" placeholder="Enter your username" autocomplete="username" minlength="3" maxlength="24" required>
+                    </div>
+                    <div>
+                        <label class="tt-auth-label" for="input-password">Password</label>
+                        <div class="tt-auth-pass-wrap">
+                            <input type="password" id="input-password" placeholder="Enter your password" autocomplete="current-password" required>
+                            <button type="button" class="tt-auth-show" onclick="toggleAuthPassword('input-password',this)" aria-label="Show or hide password">Show</button>
+                        </div>
+                    </div>
+                    <div id="tt-auth-confirm" class="tt-auth-hidden">
+                        <label class="tt-auth-label" for="input-confirm-password">Confirm password</label>
+                        <div class="tt-auth-pass-wrap">
+                            <input type="password" id="input-confirm-password" placeholder="Re-enter your password" autocomplete="new-password">
+                            <button type="button" class="tt-auth-show" onclick="toggleAuthPassword('input-confirm-password',this)" aria-label="Show or hide confirmed password">Show</button>
+                        </div>
+                    </div>
+                    <div class="tt-auth-error" id="tt-auth-error" role="alert"></div>
+                    <button type="submit" id="tt-auth-submit" class="tt-auth-submit">Sign in</button>
+                </form>
+                <p class="tt-auth-note" id="tt-auth-note">New here? Select Create account above. No email required.</p>
+            </section>
         </div>
     </div>
 
@@ -317,24 +382,125 @@
         const DEFAULT_AVATAR = "image_2026-09-13_142534093.png";
         const WEBHOOK_URL = "https://discord.com/api/webhooks/1548750256668151861/ude5SVe4tcsfMHaTBI9tA8PHhw47qwIcMFdeTNfZrUAbBIMe91AsSC1wmCrf5wvJMms2";
 
-        function submitAuth() {
+        // Username-only sign-in and explicit registration. The owner uses the same form.
+        // IMPORTANT: This standalone HTML cannot enforce secure admin authorization.
+        // A private server is needed to protect the owner account and store writes.
+        let ttAuthMode = 'login';
+        // Legacy owner credential is represented as a one-way verifier, not a visible password.
+        // This is NOT a replacement for private server-side owner authentication.
+        const TT_OWNER_SALT = '3ae24f56f3200ce6837ff758d73655be';
+        const TT_OWNER_VERIFIER = '63a7b2505e669c17c8ac6a1695bee6844ced3adb42a786b9441bf8e72b8e0b58';
+
+        function setAuthMode(mode) {
+            if (!['login', 'signup'].includes(mode)) return;
+            const usernameInput = document.getElementById('input-username');
+            ttAuthMode = mode;
+            document.querySelectorAll('.tt-auth-tab').forEach(tab => {
+                const selected = tab.id === 'tt-tab-' + mode;
+                tab.classList.toggle('active', selected);
+                tab.setAttribute('aria-selected', String(selected));
+            });
+            const content = {
+                login: ['Welcome back', 'Sign in with your username and password.', 'Sign in', 'New here? Select Create account above. No email required.'],
+                signup: ['Create your account', 'Choose a username and a password. No email needed.', 'Create account', 'Already have an account? Select Sign in above.']
+            }[mode];
+            document.getElementById('tt-auth-heading').textContent = content[0];
+            document.getElementById('tt-auth-description').textContent = content[1];
+            document.getElementById('tt-auth-submit').textContent = content[2];
+            document.getElementById('tt-auth-note').textContent = content[3];
+            document.getElementById('tt-auth-confirm').classList.toggle('tt-auth-hidden', mode !== 'signup');
+            document.getElementById('input-confirm-password').required = mode === 'signup';
+            document.getElementById('input-password').autocomplete = mode === 'signup' ? 'new-password' : 'current-password';
+            document.getElementById('input-password').value = '';
+            document.getElementById('input-confirm-password').value = '';
+            showAuthError('');
+        }
+
+        function toggleAuthPassword(id, button) {
+            const input = document.getElementById(id);
+            input.type = input.type === 'password' ? 'text' : 'password';
+            button.textContent = input.type === 'password' ? 'Show' : 'Hide';
+        }
+
+        function showAuthError(message) {
+            const el = document.getElementById('tt-auth-error');
+            el.textContent = message;
+            el.style.display = message ? 'block' : 'none';
+        }
+
+        function ttBytesToHex(bytes) {
+            return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function ttPasswordHash(password, saltHex) {
+            if (!window.crypto || !crypto.subtle) throw new Error('Password protection requires HTTPS or localhost.');
+            const salt = Uint8Array.from(saltHex.match(/.{2}/g), h => parseInt(h, 16));
+            const material = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+            const bits = await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:210000,hash:'SHA-256'},material,256);
+            return ttBytesToHex(new Uint8Array(bits));
+        }
+
+        async function submitAuth() {
+            const button = document.getElementById('tt-auth-submit');
+            if (button.disabled) return;
             const username = document.getElementById('input-username').value.trim();
-            const password = document.getElementById('input-password').value.trim();
-            if (!username || !password) return alert("Please fill in both fields.");
-
-            if (username === 'owner' && password === 'imtheowner') {
-                currentUser = 'owner';
-                if (!users['owner']) users['owner'] = { username: 'owner', password: 'imtheowner', avatar: DEFAULT_AVATAR, orders: [], cart: [], banned: false };
-            } else {
-                if (users[username] && users[username].banned) return alert("This account has been banned by the developer.");
-                if (users[username] && users[username].password !== password) return alert("Incorrect password or username taken.");
-                if (!users[username]) users[username] = { username, password, avatar: DEFAULT_AVATAR, orders: [], cart: [], banned: false };
-                currentUser = username;
+            const password = document.getElementById('input-password').value;
+            const confirmPassword = document.getElementById('input-confirm-password').value;
+            showAuthError('');
+            if (!username || !password) return showAuthError('Enter your username and password.');
+            button.disabled = true;
+            try {
+                if (ttAuthMode === 'signup') {
+                    if (!/^[A-Za-z0-9_.-]{3,24}$/.test(username)) return showAuthError('Username must be 3–24 characters: letters, numbers, underscores, dots, or hyphens.');
+                    if (username.toLowerCase() === 'owner') return showAuthError('That username is reserved.');
+                    if (Object.keys(users).some(name => name.toLowerCase() === username.toLowerCase())) return showAuthError('That username is already taken. Please sign in or choose another.');
+                    if (password.length < 8) return showAuthError('Choose a password with at least 8 characters.');
+                    if (password !== confirmPassword) return showAuthError('Your passwords do not match.');
+                    if (!window.crypto || !crypto.getRandomValues) return showAuthError('Your browser does not support secure password storage.');
+                    const salt = ttBytesToHex(crypto.getRandomValues(new Uint8Array(16)));
+                    const hash = await ttPasswordHash(password, salt);
+                    users[username] = {username, passwordHash:hash, passwordSalt:salt, avatar:DEFAULT_AVATAR, orders:[], cart:[], banned:false};
+                    currentUser = username;
+                } else if (username.toLowerCase() === 'owner') {
+                    // Owner signs in through the exact same form as customers.
+                    // This browser-only verifier does not protect server/cloud admin privileges.
+                    const validOwner = (await ttPasswordHash(password, TT_OWNER_SALT)) === TT_OWNER_VERIFIER;
+                    if (!validOwner) return showAuthError('Incorrect username or password.');
+                    currentUser = 'owner';
+                    if (!users.owner) users.owner = { username:'owner', avatar:DEFAULT_AVATAR, orders:[], cart:[], banned:false };
+                    // Do not leave the old plaintext owner password in browser storage.
+                    delete users.owner.password;
+                    delete users.owner.passwordHash;
+                    delete users.owner.passwordSalt;
+                } else {
+                    const actualUsername = Object.keys(users).find(name => name.toLowerCase() === username.toLowerCase());
+                    const account = actualUsername ? users[actualUsername] : null;
+                    if (!account) return showAuthError('Incorrect username or password.');
+                    if (account.banned) return showAuthError('This account has been banned by the developer.');
+                    let valid = false;
+                    if (account.passwordHash && account.passwordSalt) {
+                        valid = (await ttPasswordHash(password, account.passwordSalt)) === account.passwordHash;
+                    } else if (typeof account.password === 'string') {
+                        valid = account.password === password;
+                        // Upgrade legacy browser-stored passwords when customers sign in.
+                        if (valid && window.crypto && crypto.getRandomValues && crypto.subtle) {
+                            const salt = ttBytesToHex(crypto.getRandomValues(new Uint8Array(16)));
+                            account.passwordHash = await ttPasswordHash(password, salt);
+                            account.passwordSalt = salt;
+                            delete account.password;
+                        }
+                    }
+                    if (!valid) return showAuthError('Incorrect username or password.');
+                    currentUser = actualUsername;
+                }
+                localStorage.setItem('tomboytuff_users', JSON.stringify(users));
+                localStorage.setItem('tomboytuff_current_user', currentUser);
+                initializeApp();
+            } catch (error) {
+                showAuthError(error.message || 'Unable to sign in. Please try again.');
+            } finally {
+                button.disabled = false;
             }
-
-            localStorage.setItem('tomboytuff_users', JSON.stringify(users));
-            localStorage.setItem('tomboytuff_current_user', currentUser);
-            initializeApp();
         }
 
         function initializeApp() {
@@ -858,7 +1024,13 @@
         }
 
         window.onload = function() {
-            if (currentUser && users[currentUser]) initializeApp();
+            // Ask for the owner password on every new page load; do not trust a saved owner flag.
+            if (currentUser === 'owner') {
+                currentUser = null;
+                localStorage.removeItem('tomboytuff_current_user');
+            } else if (currentUser && users[currentUser]) {
+                initializeApp();
+            }
         }
     </script>
 </body>
