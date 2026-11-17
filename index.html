@@ -195,7 +195,30 @@
         .tt-store-toolbar .ghost-btn{border-radius:10px;padding:12px 14px;}
         @media(max-width:900px){.tt-store-toolbar{grid-template-columns:1fr 1fr;}.tt-store-toolbar input{grid-column:1/-1;}}
         @media(max-width:700px){.tt-header-main{align-items:stretch;}.tt-header-search{max-width:none}.tt-nav-wrap{align-items:flex-start;}.tt-header-meta{width:100%;}.tt-store-toolbar{grid-template-columns:1fr;}.tt-store-toolbar .ghost-btn{width:100%;}.nav-pills{width:100%;}}
-    </style>
+    
+/* No shirt search: simple scroll-first store on desktop, phone, and iPad */
+.tt-header-search,.tt-store-toolbar{display:none!important;}
+.tt-store-hero{position:static!important;}
+.browse-intro{padding:15px 3px 3px;margin-bottom:10px;}
+.browse-intro h2{font-size:clamp(1.5rem,2.5vw,2rem);margin-bottom:5px;}
+.browse-intro p{color:#a6b8d0;line-height:1.6;}
+.favorite-cart-row{margin-top:15px;display:grid;gap:8px;grid-template-columns:auto 1fr 1fr;align-items:center;}
+.favorite-cart-row label{font-size:.83rem;color:#c6d4ed;}
+.favorite-cart-row select{background:#0b1424;color:#fff;border:1px solid #415a80;padding:10px;border-radius:9px;min-width:0;}
+.favorite-cart-row button{background:#2765db;color:#fff;border:0;padding:11px 9px;border-radius:9px;font-weight:700;cursor:pointer;}
+.favorite-cart-row button:disabled{opacity:.5;cursor:not-allowed;}
+@media(max-width:650px){.favorite-cart-row{grid-template-columns:1fr 1fr;}.favorite-cart-row label{grid-column:1/-1}.tt-hero-side{display:none}}
+
+body{background:linear-gradient(160deg,#0b1020,#0d0d15 65%);}
+.tt-store-hero{padding:clamp(26px,5vw,65px);background:linear-gradient(120deg,#142c56 0%,#090f1e 65%);border-radius:4px;min-height:250px;}
+.tt-store-hero h1{font-size:clamp(2.8rem,6vw,5.5rem);letter-spacing:-2px;}
+.store-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:27px;}
+.shirt-card{border-radius:5px;background:#101727;}
+.shirt-img-container{height:355px;background:#101421;}
+.shirt-info{padding:20px;}
+@media(min-width:1000px){.store-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media(max-width:600px){.store-grid{grid-template-columns:1fr 1fr;gap:12px}.shirt-img-container{height:220px}.shirt-info{padding:12px}.tt-store-hero{min-height:160px}.tt-store-hero h1{font-size:2.5rem}.favorite-btn{font-size:.74rem;padding:7px}}
+</style>
 </head>
 <body>
 
@@ -251,10 +274,7 @@
         <div class="tt-header-main">
             <div class="tt-brand-stack">
                 <div class="brand" onclick="goHome()">Tomboy Tuff®</div>
-                <div class="tt-header-search">
-                    <input type="search" id="tt-header-search" placeholder="Search shirts…" aria-label="Search shirts from header" oninput="syncSearchValue(this.value)">
-                    <button type="button" onclick="goAllShirts()">All Shirts</button>
-                </div>
+
             </div>
             <div class="tt-header-meta">
                 <span class="tt-mini-badge">Favorites: <strong id="favorite-count">0</strong></span>
@@ -285,8 +305,8 @@
         <!-- Store View -->
         <div id="view-store" class="view active">
             <section class="tt-store-hero" aria-label="Store introduction">
-                <div><div class="tt-eyebrow">Tomboy Tuff® Store</div><h1>Made for the work you love.</h1><p>Explore the newest shirts, find your fit, and check availability. Your account, orders, and cart—all in one place.</p></div>
-                <div style="color:#b6cdf3;font-size:.85rem;">Original designs · Front & back previews</div>
+                <div><div class="tt-eyebrow">Welcome to Tomboy Tuff®</div><h1 id="tt-hi-message">Hi!</h1><p>Browse our shirts below. Save your favorites and take a closer look at the front and back.</p></div>
+                <div class="tt-hero-side">Made for everyday adventures and hardworking days.</div>
             </section>
             <div id="owner-panel" class="owner-panel" style="display:none;">
                 <h3 style="margin-bottom:15px; color:var(--accent);">Owner Dashboard — Shop & Promotions</h3>
@@ -366,7 +386,7 @@
                 </div>
             </div>
             
-            <div class="tt-store-toolbar" role="search"><input type="search" id="tt-search-products" placeholder="Search shirts by name…" aria-label="Search shirts" oninput="handleStoreSearchInput(this.value)"><button type="button" class="ghost-btn" onclick="goAllShirts()">Browse all shirts</button><button type="button" class="ghost-btn" onclick="switchView('favorites')">Open favorites</button><select id="tt-sort-products" onchange="renderStoreUI()" aria-label="Browse order"><option value="new">Newest shirts</option><option value="name">Name A–Z</option></select></div>
+            <div class="browse-intro"><h2>All Shirts</h2><p>Just scroll to discover every design. Tap a shirt to view its front and back.</p></div>
             <div id="store-results-count" style="color:#9aaecb;font-size:.85rem;margin:0 0 11px" aria-live="polite"></div>
             <div id="store-listings" class="store-grid">Loading cloud store...</div>
         </div>
@@ -380,7 +400,7 @@
                 </div>
                 <button type="button" class="ghost-btn" onclick="goAllShirts()">Back to all shirts</button>
             </div>
-            <div id="favorites-listings" class="store-grid"></div>
+            <p id="favorites-added-note" role="status" aria-live="polite" style="color:#9fddc9;margin-bottom:12px;"></p><div id="favorites-listings" class="store-grid"></div>
         </div>
 
         <!-- Cart View -->
@@ -681,6 +701,8 @@
             ensureUserState();
             document.getElementById('auth-overlay').style.display = 'none';
             loadProfile();
+            const greet = document.getElementById('tt-hi-message');
+            if (greet) greet.textContent = 'Hi!';
             fetchCloudStore();
             updateCartUI();
             updateFavoriteUI();
@@ -774,10 +796,10 @@
                 grid.innerHTML = '<div class="tt-empty-state" style="grid-column:1/-1;"><h3 style="margin-bottom:10px;">No favorites yet</h3><p>Tap the Favorite button on any shirt, then come back here to open it again and add it to your cart.</p></div>';
                 return;
             }
-            grid.innerHTML = items.map(renderShirtCard).join('');
+            grid.innerHTML = items.map(s => renderShirtCard(s, true)).join('');
         }
 
-        function renderShirtCard(s) {
+        function renderShirtCard(s, inFavorites = false) {
             const outOfStock = s.stock <= 0;
             const deleteBtn = (currentUser === 'owner') ? `<button class="delete-shirt-btn" onclick="deleteShirt(event, ${s.id})">Delete</button>` : ``;
             const imgList = s.images && s.images.length > 0 ? s.images : [s.img || 'https://via.placeholder.com/300x300?text=No+Image'];
@@ -793,15 +815,30 @@
                     </div>
                     <div class="shirt-info">
                         <div>${s.name}</div>
-                        <div class="tt-card-note">Tap to preview the front and back</div>
+                        <div class="tt-card-note">Tap for front and back views</div>
                         <div class="shirt-meta-row">
                             <div style="font-size:0.95rem;">${priceHTML}</div>
                             <div class="shirt-actions-mini">
                                 <button type="button" class="favorite-btn ${activeClass}" onclick="toggleFavorite(${s.id}, event)">${isFavorite(s.id) ? 'Favorited' : 'Favorite'}</button>
                             </div>
                         </div>
+                        ${inFavorites ? `<div class="favorite-cart-row" onclick="event.stopPropagation()"><label for="fav-size-${s.id}">Size</label><select id="fav-size-${s.id}" aria-label="Choose size for ${s.name}"><option value="Small">Small</option><option value="Medium">Medium</option><option value="Large">Large</option><option value="XL">XL</option><option value="XXL">XXL</option></select><button type="button" ${outOfStock ? 'disabled' : ''} onclick="addFavoriteToCart(${s.id},event)">Add to Cart</button></div>` : ''}
                     </div>
                 </div>`;
+        }
+
+        function addFavoriteToCart(id, event) {
+            if (event) event.stopPropagation();
+            const shirt = storeShirts.find(s => s.id === id);
+            if (!shirt || shirt.stock <= 0 || !users[currentUser]) return;
+            const size = document.getElementById(`fav-size-${id}`)?.value || 'Small';
+            const price = shirt.onSale ? shirt.salePrice : shirt.price;
+            const imgs = shirt.images && shirt.images.length ? shirt.images : [shirt.img || ''];
+            users[currentUser].cart.push({...shirt, img:imgs[0], price, size, cartId: Date.now() + Math.random()});
+            localStorage.setItem('tomboytuff_users', JSON.stringify(users));
+            updateCartUI();
+            const note = document.getElementById('favorites-added-note');
+            if (note) note.textContent = `${shirt.name} (${size}) added to your cart.`;
         }
 
         function loadProfile() {
@@ -1200,14 +1237,11 @@
 
         function renderStoreUI() {
             const grid = document.getElementById('store-listings');
-            const search = (document.getElementById('tt-search-products')?.value || document.getElementById('tt-header-search')?.value || '').trim().toLowerCase();
-            const order = document.getElementById('tt-sort-products')?.value || 'new';
-            const filteredShirts = storeShirts.filter(s => String(s.name || '').toLowerCase().includes(search));
-            filteredShirts.sort((a,b) => order === 'name' ? String(a.name).localeCompare(String(b.name)) : Number(b.id)-Number(a.id));
+            const filteredShirts = [...storeShirts].sort((a,b) => Number(b.id)-Number(a.id));
             const countNode = document.getElementById('store-results-count');
             if (countNode) countNode.textContent = `${filteredShirts.length} item${filteredShirts.length===1?'':'s'} available to browse`;
             if (filteredShirts.length === 0) {
-                grid.innerHTML = '<p style="color:var(--text-muted);grid-column:1/-1;">No matching shirts found.</p>';
+                grid.innerHTML = '<p style="color:var(--text-muted);grid-column:1/-1;">No shirts are listed yet.</p>';
             } else {
                 grid.innerHTML = filteredShirts.map(renderShirtCard).join('');
             }
