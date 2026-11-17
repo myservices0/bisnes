@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>tomboytuff</title>
+    <title>Tomboy Tuff® | Shop</title>
     <!-- Supabase SDK for Unlimited Cloud Storage -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -103,8 +103,98 @@
         .tt-auth-error { display:none; border:1px solid #7c3940; border-radius:8px; background:#32191f; color:#ffbec4; padding:11px 12px; font-size:.85rem; line-height:1.5; }
         .tt-auth-note { font-size:.79rem; line-height:1.5; color:#8591a5; margin-top:16px; text-align:center; }
         .tt-auth-hidden { display:none !important; }
+        .tt-promo-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+        .tt-promo-create { width:100%; padding:11px; border:0; border-radius:8px; background:#2e65ce; color:white; cursor:pointer; font-weight:750; }
+        .tt-promo-status { color:#9dbaf3; font-size:.83rem; min-height:20px; margin:9px 0; }
+        .tt-promo-list { max-height:260px; overflow:auto; }
+        .tt-promo-chip { color:#94b8fe; font-size:.8rem; }
+        .tt-checkout-notice { color:#ffcf8c; background:#342817; border:1px solid #6a542e; border-radius:8px; padding:14px; margin:15px 0; line-height:1.5; }
+        .tt-owner-tools { border-top:1px solid var(--border);margin-top:24px;padding-top:22px; }
+        .tt-owner-stats { display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:15px 0; }
+        .tt-owner-stat { background:#101b2c;border:1px solid #364860;border-radius:12px;padding:15px; }
+        .tt-owner-stat strong { display:block;font-size:1.45rem;color:white; }
+        .tt-owner-stat span {font-size:.81rem;color:#a8bbd4;}
+        .tt-owner-actions {display:flex;flex-wrap:wrap;gap:11px;align-items:center;margin:14px 0;}
+        .tt-owner-actions input[type="search"] {flex:1;min-width:185px;margin:0;}
+        .tt-owner-actions label {display:flex;gap:7px;align-items:center;color:#cbd8eb;font-size:.85rem;}
+        .tt-owner-actions input[type="checkbox"] {width:auto;margin:0;}
+        .tt-owner-actions button,.tt-owner-save {border:1px solid #5579b5;background:#1b3767;color:white;border-radius:8px;padding:10px;cursor:pointer;font-weight:700;}
+        .tt-owner-inventory {max-height:410px;overflow:auto;display:grid;gap:10px;}
+        .tt-owner-product {background:#101722;border:1px solid #344157;padding:12px;border-radius:11px;}
+        .tt-owner-product-fields {display:grid;grid-template-columns:minmax(120px,2fr) repeat(2,minmax(70px,1fr)) auto;gap:9px;align-items:end;}
+        .tt-owner-product-fields label {font-size:.78rem;color:#b7c6d9;}
+        .tt-owner-product-fields input {margin:5px 0 0;width:100%;}
+        @media(max-width:680px) {.tt-owner-product-fields {grid-template-columns:1fr 1fr;} .tt-owner-product-fields label:first-child{grid-column:1/-1;}}
+        @media(max-width:420px) { .tt-promo-row { grid-template-columns:1fr; } }
         @media(max-width:700px) { #auth-overlay { padding:12px; align-items:flex-start; } #auth-overlay .auth-card { grid-template-columns:1fr; max-width:460px; min-height:0; margin:auto; } .tt-auth-brand { padding:23px 24px; gap:17px; } .tt-auth-brand h2 { font-size:1.8rem; margin-bottom:6px; } .tt-auth-brand p { font-size:.85rem; } .tt-auth-brand-foot { display:none; } .tt-auth-main { padding:25px 23px 28px; } .tt-auth-tabs { margin-bottom:22px; } }
         @media(max-width:380px) { .tt-auth-tab { font-size:.73rem; } .tt-auth-main { padding:23px 17px; } }
+
+        /* Consistent storefront & sign-in styling, preserving all shop functions */
+        :root { --bg:#0a0e16; --surface:#151b27; --surface-light:#232e41; --border:#303b4f; --accent:#316bda; --text-muted:#9eacc4; --success:#28a56d; }
+        body { background:radial-gradient(ellipse 75% 36% at 17% 0%,rgba(38,83,165,.23),transparent),#0a0e16; }
+        header { position:sticky;top:0;z-index:100;backdrop-filter:blur(16px); background:rgba(16,23,36,.95); border-bottom:1px solid #32405a; padding:18px clamp(18px,5vw,70px); }
+        .brand { text-transform:none;letter-spacing:-.6px;color:#fff;font-size:1.3rem; }
+        nav a { text-transform:none;letter-spacing:0;font-size:.9rem;padding:8px 10px;border-radius:7px; }
+        nav a:hover,nav a.active-link { background:#26354d;color:#fff; }
+        main { max-width:1320px;padding:clamp(22px,4vw,52px); }
+        .tt-store-hero { background:linear-gradient(115deg,#182c4c,#131924 68%);border:1px solid #344765;border-radius:18px;padding:clamp(20px,4vw,38px);display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:27px;flex-wrap:wrap; }
+        .tt-eyebrow { color:#a5c8ff;letter-spacing:2px;text-transform:uppercase;font-size:.7rem;font-weight:800;margin-bottom:11px; }
+        .tt-store-hero h1 { font-size:clamp(1.6rem,3vw,2.6rem);letter-spacing:-1px;line-height:1.13;margin:0 0 10px; }
+        .tt-store-hero p { color:#b8c5d8;line-height:1.6;max-width:560px; }
+        .tt-store-toolbar { display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:17px; }
+        .tt-store-toolbar input,.tt-store-toolbar select { background:#141c29;border:1px solid #35435a;color:#f7f9ff;padding:12px 14px;border-radius:10px;min-height:45px; }
+        .tt-store-toolbar input { min-width:240px;flex:1; }
+        .tt-store-toolbar select { min-width:150px; }
+        .store-grid { grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:22px; }
+        .shirt-card { border-radius:14px;background:#151c29;overflow:hidden;border:1px solid #324057;box-shadow:0 8px 30px rgba(0,0,0,.16); }
+        .shirt-card:hover { border-color:#5277b3;transform:translateY(-4px);box-shadow:0 15px 40px rgba(0,0,0,.26); }
+        .shirt-img-container { background:#101622;height:272px; }
+        .shirt-info { text-align:left;line-height:1.5;padding:17px 19px; }
+        .stock-badge { border-radius:7px;background:#1e293a;border:1px solid #455777; }
+        .owner-panel { background:#141c29;border:1px solid #354762;border-radius:17px;padding:clamp(18px,3vw,30px);box-shadow:0 12px 36px rgba(0,0,0,.14); }
+        .admin-grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:22px; }
+        .admin-grid>div { background:#111825;border:1px solid #303e54;border-radius:13px;padding:20px; }
+        .owner-panel input,.owner-panel select { background:#0d1420;border-color:#36465e;border-radius:8px;padding:12px;font-size:.92rem; }
+        .owner-panel h4 { font-size:1.04rem;color:#f0f5ff; }
+        .tt-form-help { color:#9daec8;font-size:.77rem;line-height:1.55;margin:-3px 0 12px; }
+        .code-item { border-color:#31415a;border-radius:10px;line-height:1.6;gap:15px; }
+        .modal-content,.checkout-box,.box { background:#171f2d;border-color:#34445d;border-radius:14px; }
+        .btn-buy { background:#316bda; }
+        #auth-overlay { background:radial-gradient(ellipse 70% 50% at 15% 15%,rgba(45,104,217,.23),transparent),#0a0e16; }
+        #auth-overlay .auth-card { background:#151b27;border-color:#35425b; }
+        .tt-auth-brand { background:linear-gradient(145deg,#1d396a,#16243d 56%,#121b2a); }
+        @media(max-width:600px){ .tt-store-hero{padding:22px}.tt-store-toolbar input,.tt-store-toolbar select{width:100%;min-width:0}header{position:static} }
+
+        .tt-header-main{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;width:100%;}
+        .tt-brand-stack{display:flex;flex-direction:column;gap:10px;min-width:240px;flex:1;}
+        .tt-brand-stack .brand{line-height:1;}
+        .tt-brand-sub{color:#99b0d3;font-size:.82rem;}
+        .tt-header-search{display:flex;gap:10px;align-items:center;flex-wrap:wrap;max-width:560px;width:100%;}
+        .tt-header-search input{flex:1;min-width:220px;background:#11192a;border:1px solid #364560;color:#fff;padding:12px 14px;border-radius:10px;}
+        .tt-header-search button{background:#316bda;color:#fff;border:1px solid #557dcb;padding:12px 16px;border-radius:10px;cursor:pointer;font-weight:700;}
+        .tt-nav-wrap{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;width:100%;margin-top:10px;}
+        .nav-pills{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+        .tt-chip-link{background:#172235;border:1px solid #34445f;color:#dce8ff;padding:9px 12px;border-radius:999px;font-size:.87rem;line-height:1;}
+        .tt-chip-link:hover,.tt-chip-link.active-link{background:#2a467c;border-color:#5f87d2;color:#fff;}
+        .tt-header-meta{display:flex;gap:10px;flex-wrap:wrap;align-items:center;color:#90a8ce;font-size:.83rem;}
+        .tt-header-meta .tt-mini-badge{background:#121b2a;border:1px solid #33445c;border-radius:999px;padding:8px 11px;}
+        .store-grid .shirt-card{display:flex;flex-direction:column;}
+        .shirt-meta-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;}
+        .shirt-actions-mini{display:flex;gap:8px;align-items:center;}
+        .favorite-btn,.ghost-btn{background:#122036;border:1px solid #364d73;color:#d8e7ff;border-radius:999px;padding:8px 12px;cursor:pointer;font-size:.82rem;font-weight:700;}
+        .favorite-btn.active{background:#355aa4;color:#fff;border-color:#6a8fde;}
+        .favorite-btn:before{content:'♡ ';}
+        .favorite-btn.active:before{content:'♥ ';}
+        .tt-section-title{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;margin-bottom:18px;}
+        .tt-empty-state{background:#151c29;border:1px solid #324057;border-radius:16px;padding:28px;color:#c0d0e9;text-align:center;}
+        .tt-modal-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding-right:20px;}
+        .tt-modal-sub{color:#9ab0d4;font-size:.84rem;margin-top:5px;}
+        .tt-modal-actions-top{display:flex;justify-content:flex-end;margin-bottom:10px;}
+        .tt-card-note{font-size:.78rem;color:#9eb0cc;margin-top:4px;}
+        .tt-store-toolbar{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;}
+        .tt-store-toolbar .ghost-btn{border-radius:10px;padding:12px 14px;}
+        @media(max-width:900px){.tt-store-toolbar{grid-template-columns:1fr 1fr;}.tt-store-toolbar input{grid-column:1/-1;}}
+        @media(max-width:700px){.tt-header-main{align-items:stretch;}.tt-header-search{max-width:none}.tt-nav-wrap{align-items:flex-start;}.tt-header-meta{width:100%;}.tt-store-toolbar{grid-template-columns:1fr;}.tt-store-toolbar .ghost-btn{width:100%;}.nav-pills{width:100%;}}
     </style>
 </head>
 <body>
@@ -158,14 +248,32 @@
 
     <!-- Main Navigation -->
     <header>
-        <div class="brand" onclick="switchView('store')">tomboytuff</div>
-        <nav>
-            <a onclick="switchView('store')" id="nav-store">Store</a>
-            <a onclick="switchView('cart')" id="nav-cart">Cart (<span id="cart-count">0</span>)</a>
-            <a onclick="switchView('orders')" id="nav-orders">Orders</a>
-            <a onclick="switchView('profile')" id="nav-profile">Profile</a>
-            <a onclick="switchView('tos')" id="nav-tos">T.O.S</a>
-        </nav>
+        <div class="tt-header-main">
+            <div class="tt-brand-stack">
+                <div class="brand" onclick="goHome()">Tomboy Tuff®</div>
+                <div class="tt-header-search">
+                    <input type="search" id="tt-header-search" placeholder="Search shirts…" aria-label="Search shirts from header" oninput="syncSearchValue(this.value)">
+                    <button type="button" onclick="goAllShirts()">All Shirts</button>
+                </div>
+            </div>
+            <div class="tt-header-meta">
+                <span class="tt-mini-badge">Favorites: <strong id="favorite-count">0</strong></span>
+                <span class="tt-mini-badge">Cart: <strong id="cart-count-header">0</strong></span>
+            </div>
+        </div>
+        <div class="tt-nav-wrap">
+            <nav class="nav-pills">
+                <a class="tt-chip-link" onclick="goHome()" id="nav-store">Home</a>
+                <a class="tt-chip-link" onclick="goAllShirts()" id="nav-allshirts">All Shirts</a>
+                <a class="tt-chip-link" onclick="switchView('favorites')" id="nav-favorites">Favorites</a>
+                <a class="tt-chip-link" onclick="switchView('cart')" id="nav-cart">Cart (<span id="cart-count">0</span>)</a>
+                <a class="tt-chip-link" onclick="switchView('profile')" id="nav-profile">My Account</a>
+                <a class="tt-chip-link" onclick="switchView('tos')" id="nav-tos">T.O.S</a>
+            </nav>
+            <div class="tt-header-meta">
+                <span>Tap a shirt to view the front and back.</span>
+            </div>
+        </div>
     </header>
 
     <main>
@@ -176,8 +284,12 @@
 
         <!-- Store View -->
         <div id="view-store" class="view active">
+            <section class="tt-store-hero" aria-label="Store introduction">
+                <div><div class="tt-eyebrow">Tomboy Tuff® Store</div><h1>Made for the work you love.</h1><p>Explore the newest shirts, find your fit, and check availability. Your account, orders, and cart—all in one place.</p></div>
+                <div style="color:#b6cdf3;font-size:.85rem;">Original designs · Front & back previews</div>
+            </section>
             <div id="owner-panel" class="owner-panel" style="display:none;">
-                <h3 style="margin-bottom:15px; color:var(--accent);">Developer Area (Swipe Carousel & Cloud Storage)</h3>
+                <h3 style="margin-bottom:15px; color:var(--accent);">Owner Dashboard — Shop & Promotions</h3>
                 <div class="admin-grid">
                     <div>
                         <h4 style="margin-bottom:10px;">Add New Item (Up to 2 Images)</h4>
@@ -195,14 +307,41 @@
                     </div>
                     <div>
                         <h4 style="margin-bottom:10px;">Manage Promo Codes</h4>
-                        <div style="display:flex; gap:10px;">
-                            <input type="text" id="new-code-name" placeholder="Code (e.g. SUMMER20)">
-                            <input type="number" id="new-code-pct" placeholder="% Off" style="width:80px;">
+                        <p style="color:var(--text-muted);font-size:.78rem;margin-bottom:10px;line-height:1.5;">Create discounts for one product or the whole store. This version is a preview; your server must enforce owner-only edits and discounts before taking payments.</p>
+                        <label class="tt-auth-label" for="new-code-name">Redeem code</label>
+                        <input type="text" id="new-code-name" placeholder="Example: SUMMER20" maxlength="32" autocomplete="off">
+                        <label class="tt-auth-label" for="new-code-product">Applies to</label>
+                        <select id="new-code-product"><option value="all">All items</option></select>
+                        <div class="tt-promo-row">
+                            <div><label class="tt-auth-label" for="new-code-type">Discount type</label><select id="new-code-type"><option value="percent">Percentage (%)</option><option value="fixed">Dollar amount ($)</option></select></div>
+                            <div><label class="tt-auth-label" for="new-code-value">Amount off</label><input type="number" id="new-code-value" placeholder="e.g. 20" min="0.01" step="0.01"></div>
                         </div>
-                        <button type="button" onclick="addPromoCode()" style="width:100%; padding:8px; background:var(--surface-light); color:#fff; border:1px solid var(--border); border-radius:4px; cursor:pointer; margin-bottom:15px;">Add Code</button>
-                        <div id="admin-codes-list" style="max-height: 100px; overflow-y: auto;"></div>
+                        <label class="tt-auth-label" for="new-code-limit">How many customers can use this code?</label>
+                        <select id="new-code-limit" onchange="togglePromoLimit()"><option value="50">First 50 customers</option><option value="unlimited">Unlimited customers</option></select>
+                        <p class="tt-form-help" id="promo-limit-hint">Available to the first 50 unique customers who complete a purchase.</p>
+                        <label class="tt-auth-label" for="new-code-expiry">Expiration</label>
+                        <select id="new-code-expiry" onchange="togglePromoExpiry()"><option value="days">Expire after chosen days</option><option value="unlimited">Never expire — until deleted</option></select>
+                        <label class="tt-auth-label" for="new-code-days" id="new-code-days-label">How many days will this code stay active?</label>
+                        <input id="new-code-days" type="number" min="1" max="3650" value="7" placeholder="Days (example: 7)">
+                        <button type="button" onclick="addPromoCode()" class="tt-promo-create">Create redeem code</button>
+                        <p class="tt-form-help">Codes can be created without a set limit. Real redemption counts must be enforced during payment on a secure server.</p>
+                        <p id="promo-admin-status" role="status" class="tt-promo-status"></p>
+                        <div id="admin-codes-list" class="tt-promo-list"></div>
                     </div>
                 </div>
+
+                <section class="tt-owner-tools" aria-label="Owner inventory overview">
+                    <h4>Store Overview & Inventory</h4>
+                    <div class="tt-owner-stats" id="tt-owner-stats" aria-live="polite"></div>
+                    <div class="tt-owner-actions">
+                        <input type="search" id="tt-owner-item-search" placeholder="Find a product to edit…" oninput="renderOwnerInventory()" aria-label="Find a product to edit">
+                        <label><input type="checkbox" id="tt-owner-low-only" onchange="renderOwnerInventory()"> Low stock only (5 or fewer)</label>
+                        <button type="button" onclick="exportOwnerInventory()">Export inventory CSV</button>
+                    </div>
+                    <p class="tt-form-help">Edit existing product names, prices, and stock without uploading the shirt again. Choose Save for each product.</p>
+                    <div id="tt-owner-inventory" class="tt-owner-inventory"></div>
+                    <p id="tt-owner-save-status" role="status" class="tt-promo-status"></p>
+                </section>
 
                 <div style="border-top: 1px solid var(--border); margin-top: 20px; padding-top: 20px;">
                     <h4 style="margin-bottom:10px;">Item Discount Manager</h4>
@@ -227,7 +366,21 @@
                 </div>
             </div>
             
+            <div class="tt-store-toolbar" role="search"><input type="search" id="tt-search-products" placeholder="Search shirts by name…" aria-label="Search shirts" oninput="handleStoreSearchInput(this.value)"><button type="button" class="ghost-btn" onclick="goAllShirts()">Browse all shirts</button><button type="button" class="ghost-btn" onclick="switchView('favorites')">Open favorites</button><select id="tt-sort-products" onchange="renderStoreUI()" aria-label="Browse order"><option value="new">Newest shirts</option><option value="name">Name A–Z</option></select></div>
+            <div id="store-results-count" style="color:#9aaecb;font-size:.85rem;margin:0 0 11px" aria-live="polite"></div>
             <div id="store-listings" class="store-grid">Loading cloud store...</div>
+        </div>
+
+        <!-- Favorites View -->
+        <div id="view-favorites" class="view">
+            <div class="tt-section-title">
+                <div>
+                    <h2>Your Favorite Shirts</h2>
+                    <p style="color:var(--text-muted);margin-top:6px;">Save shirts here, then open them again to view the back and add them to your cart.</p>
+                </div>
+                <button type="button" class="ghost-btn" onclick="goAllShirts()">Back to all shirts</button>
+            </div>
+            <div id="favorites-listings" class="store-grid"></div>
         </div>
 
         <!-- Cart View -->
@@ -244,12 +397,7 @@
         <div id="view-checkout" class="view">
             <div class="checkout-box">
                 <h2 style="margin-bottom: 20px; text-align:center;">Secure Checkout</h2>
-                <input type="text" id="cc-name" placeholder="Name on Card">
-                <input type="text" id="cc-num" placeholder="Card Number (0000 0000 0000 0000)" maxlength="19">
-                <div class="card-row">
-                    <input type="text" id="cc-exp" placeholder="MM/YY" maxlength="5">
-                    <input type="text" id="cc-cvc" placeholder="CVC" maxlength="4">
-                </div>
+                <div class="tt-checkout-notice" role="status">Checkout is in preview mode. No payment processor is connected. Do not enter card information. Payments must be connected securely before accepting orders.</div>
                 
                 <div style="border-top:1px solid var(--border); margin:20px 0; padding-top:20px;">
                     <input type="text" id="promo-code" placeholder="Enter Promo Code">
@@ -267,7 +415,7 @@
                     <span>Total to Pay:</span>
                     <span>$<span id="checkout-total">0.00</span></span>
                 </div>
-                <button onclick="processPayment()" class="btn-buy" style="width:100%;">Pay Now</button>
+                <button type="button" disabled class="btn-buy" style="width:100%; opacity:.6; cursor:not-allowed;">Payment setup required</button>
             </div>
         </div>
 
@@ -279,7 +427,7 @@
 
         <!-- Profile View -->
         <div id="view-profile" class="view">
-            <h2>User Profile</h2>
+            <h2>My Account</h2>
             <div class="box profile-layout" style="margin-top: 20px;">
                 <img id="profile-avatar-img" src="image_2026-09-13_142534093.png" alt="Avatar" style="width:80px; height:80px; border-radius:50%; object-fit:cover; border:2px solid var(--border);">
                 <div>
@@ -307,8 +455,13 @@
     <div id="product-modal" class="modal-overlay">
         <div class="modal-content">
             <button class="modal-close" onclick="closeModal('product-modal')">&times;</button>
-            <h2 id="modal-shirt-name" style="margin-bottom:5px;">Shirt Name</h2>
-            <p id="modal-shirt-stock-display" style="color:var(--success); font-size:0.85rem; margin-bottom:10px;">In Stock</p>
+            <div class="tt-modal-top">
+                <div>
+                    <h2 id="modal-shirt-name" style="margin-bottom:5px;">Shirt Name</h2>
+                    <p id="modal-shirt-stock-display" style="color:var(--success); font-size:0.85rem; margin-bottom:0;">In Stock</p>
+                    <div class="tt-modal-sub">Swipe or use the arrows to see the shirt front and back.</div>
+                </div>
+            </div>
             
             <!-- Swipeable Image Carousel Container -->
             <div class="carousel-box" id="carousel-box">
@@ -317,6 +470,7 @@
                 <button class="carousel-btn carousel-next" id="next-btn" onclick="slideImage(1)">❯</button>
             </div>
             <div class="carousel-indicators" id="carousel-indicators">1 of 1</div>
+            <div class="tt-modal-actions-top"><button type="button" id="modal-favorite-btn" class="favorite-btn" onclick="toggleFavorite(selectedShirtId)">Favorite</button></div>
 
             <p style="font-size:1.2rem; font-weight:bold; margin-bottom:10px;" id="modal-price-container">$<span id="modal-shirt-price">0.00</span></p>
             <label style="color:var(--text-muted); font-size:0.9rem; display:block; text-align:left;">Select Size:</label>
@@ -371,7 +525,13 @@
         let currentAnnouncement = { text: "", targetTime: null };
         let countdownInterval = null;
 
-        let promoCodes = JSON.parse(localStorage.getItem('tomboytuff_promos')) || { "TOMBOYTUFF": 10 };
+        // Shared store promotions are loaded from store_config.promos.
+        // maxCustomers/redeemedCount are display and preview guards only.
+        // A secure payment backend MUST atomically enforce 50 unique verified buyers;
+        // client-side redemption counters are NOT trustworthy and are not incremented at preview checkout.
+        // This client-only prototype is NOT authorization for real discounts/payments.
+        let promoCodes = {};
+        let activePromoCode = null;
         
         let temporaryFile1 = null;
         let temporaryFile2 = null;
@@ -382,7 +542,7 @@
         let activeDiscountPct = 0;
         let confirmAction = null; 
         const DEFAULT_AVATAR = "image_2026-09-13_142534093.png";
-        const WEBHOOK_URL = "https://discord.com/api/webhooks/1548750256668151861/ude5SVe4tcsfMHaTBI9tA8PHhw47qwIcMFdeTNfZrUAbBIMe91AsSC1wmCrf5wvJMms2";
+        // Do not include webhook secrets or payment credentials in public HTML.
 
         // Username-only sign-in and explicit registration. The owner uses the same form.
         // IMPORTANT: This standalone HTML cannot enforce secure admin authorization.
@@ -518,15 +678,12 @@
         }
 
         function initializeApp() {
-            if(!users[currentUser].cart) users[currentUser].cart = [];
-            if(!users[currentUser].avatar || users[currentUser].avatar === 'https://via.placeholder.com/80') {
-                users[currentUser].avatar = DEFAULT_AVATAR;
-                localStorage.setItem('tomboytuff_users', JSON.stringify(users));
-            }
+            ensureUserState();
             document.getElementById('auth-overlay').style.display = 'none';
             loadProfile();
             fetchCloudStore();
             updateCartUI();
+            updateFavoriteUI();
             loadOrders();
             renderAdminCodes();
             renderAdminUsers();
@@ -538,6 +695,113 @@
         function signOut() {
             localStorage.removeItem('tomboytuff_current_user');
             location.reload();
+        }
+
+
+        function ensureUserState() {
+            if(!users[currentUser].cart) users[currentUser].cart = [];
+            if(!users[currentUser].orders) users[currentUser].orders = [];
+            if(!users[currentUser].favorites) users[currentUser].favorites = [];
+            if(!users[currentUser].avatar || users[currentUser].avatar === 'https://via.placeholder.com/80') users[currentUser].avatar = DEFAULT_AVATAR;
+            localStorage.setItem('tomboytuff_users', JSON.stringify(users));
+        }
+
+        function isFavorite(id) {
+            ensureUserState();
+            return users[currentUser].favorites.includes(id);
+        }
+
+        function updateFavoriteUI() {
+            ensureUserState();
+            const count = users[currentUser].favorites.length;
+            const countNode = document.getElementById('favorite-count');
+            if (countNode) countNode.innerText = count;
+            const modalBtn = document.getElementById('modal-favorite-btn');
+            if (modalBtn && selectedShirtId != null) {
+                modalBtn.classList.toggle('active', isFavorite(selectedShirtId));
+                modalBtn.textContent = isFavorite(selectedShirtId) ? 'Favorited' : 'Favorite';
+            }
+            renderFavorites();
+        }
+
+        function syncSearchValue(value='') {
+            const top = document.getElementById('tt-header-search');
+            const store = document.getElementById('tt-search-products');
+            if (top && top.value !== value) top.value = value;
+            if (store && store.value !== value) store.value = value;
+            renderStoreUI();
+        }
+
+        function handleStoreSearchInput(value='') {
+            syncSearchValue(value);
+        }
+
+        function goHome() {
+            switchView('store');
+            document.querySelectorAll('nav a').forEach(a => a.classList.remove('active-link'));
+            document.getElementById('nav-store')?.classList.add('active-link');
+            window.scrollTo({top:0,behavior:'smooth'});
+        }
+
+        function goAllShirts() {
+            switchView('store');
+            document.querySelectorAll('nav a').forEach(a => a.classList.remove('active-link'));
+            document.getElementById('nav-allshirts')?.classList.add('active-link');
+            setTimeout(() => {
+                document.getElementById('store-listings')?.scrollIntoView({behavior:'smooth', block:'start'});
+            }, 50);
+        }
+
+        function toggleFavorite(id, event) {
+            if (event) event.stopPropagation();
+            if (!users[currentUser] || !storeShirts.find(s => s.id === id)) return;
+            ensureUserState();
+            const list = users[currentUser].favorites;
+            const idx = list.indexOf(id);
+            if (idx >= 0) list.splice(idx, 1); else list.unshift(id);
+            localStorage.setItem('tomboytuff_users', JSON.stringify(users));
+            renderStoreUI();
+            updateFavoriteUI();
+        }
+
+        function renderFavorites() {
+            const grid = document.getElementById('favorites-listings');
+            if (!grid || !users[currentUser]) return;
+            ensureUserState();
+            const ids = users[currentUser].favorites;
+            const items = ids.map(id => storeShirts.find(s => s.id === id)).filter(Boolean);
+            if (!items.length) {
+                grid.innerHTML = '<div class="tt-empty-state" style="grid-column:1/-1;"><h3 style="margin-bottom:10px;">No favorites yet</h3><p>Tap the Favorite button on any shirt, then come back here to open it again and add it to your cart.</p></div>';
+                return;
+            }
+            grid.innerHTML = items.map(renderShirtCard).join('');
+        }
+
+        function renderShirtCard(s) {
+            const outOfStock = s.stock <= 0;
+            const deleteBtn = (currentUser === 'owner') ? `<button class="delete-shirt-btn" onclick="deleteShirt(event, ${s.id})">Delete</button>` : ``;
+            const imgList = s.images && s.images.length > 0 ? s.images : [s.img || 'https://via.placeholder.com/300x300?text=No+Image'];
+            const displayImg = imgList[0];
+            const priceHTML = s.onSale ? `<span style="text-decoration: line-through; color: var(--text-muted); font-size: 0.85rem; margin-right: 6px;">$${s.price.toFixed(2)}</span> <span style="color: var(--success);">$${s.salePrice.toFixed(2)}</span>` : `$${s.price.toFixed(2)}`;
+            const activeClass = isFavorite(s.id) ? 'active' : '';
+            return `
+                <div class="shirt-card ${outOfStock ? 'out-of-stock' : ''}" onclick="openProduct(${s.id})">
+                    ${deleteBtn}
+                    <div class="stock-badge">${outOfStock ? 'SOLD OUT' : s.stock + ' Left'}</div>
+                    <div class="shirt-img-container">
+                        <img class="shirt-img" src="${displayImg}" alt="${s.name}" loading="lazy">
+                    </div>
+                    <div class="shirt-info">
+                        <div>${s.name}</div>
+                        <div class="tt-card-note">Tap to preview the front and back</div>
+                        <div class="shirt-meta-row">
+                            <div style="font-size:0.95rem;">${priceHTML}</div>
+                            <div class="shirt-actions-mini">
+                                <button type="button" class="favorite-btn ${activeClass}" onclick="toggleFavorite(${s.id}, event)">${isFavorite(s.id) ? 'Favorited' : 'Favorite'}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
         }
 
         function loadProfile() {
@@ -574,9 +838,14 @@
                 if (data) {
                     storeShirts = data.shirts || [];
                     currentAnnouncement = data.announcement || { text: "", targetTime: null };
+                    promoCodes = (data.promos && typeof data.promos === 'object') ? data.promos : {};
                     renderAnnouncementBanner();
+                    renderAdminCodes();
+                    renderPromoProductOptions();
+                    renderOwnerInventory();
                     if(document.getElementById('view-store').classList.contains('active')) {
                         renderStoreUI();
+                        renderFavorites();
                         renderAdminDiscounts();
                     }
                 }
@@ -587,12 +856,15 @@
 
         async function saveCloudStore() {
             try {
-                await supabaseClient
+                const { error } = await supabaseClient
                     .from('store_config')
-                    .upsert({ id: 1, shirts: storeShirts, announcement: currentAnnouncement });
-                fetchCloudStore();
+                    .upsert({ id: 1, shirts: storeShirts, announcement: currentAnnouncement, promos: promoCodes });
+                if (error) throw error;
+                await fetchCloudStore();
+                return true;
             } catch(err) {
-                alert("Error saving data to Supabase cloud.");
+                alert('Could not save to Supabase. Check the store_config promos column and permissions.');
+                return false;
             }
         }
 
@@ -689,6 +961,72 @@
             }
         }
 
+        function renderOwnerInventory() {
+            if (currentUser !== 'owner') return;
+            const stats = document.getElementById('tt-owner-stats');
+            const list = document.getElementById('tt-owner-inventory');
+            if (!stats || !list) return;
+            const count = storeShirts.length;
+            const units = storeShirts.reduce((sum, p) => sum + Math.max(0, Number(p.stock) || 0), 0);
+            const low = storeShirts.filter(p => Number(p.stock) <= 5).length;
+            const livePromos = Object.values(promoCodes).filter(p => isValidPromo(p)).length;
+            stats.replaceChildren();
+            for (const [value,label] of [[count,'Shirts listed'],[units,'Units in stock'],[low,'Low/out of stock'],[livePromos,'Active codes']]) {
+                const card = document.createElement('div'); card.className = 'tt-owner-stat';
+                const number = document.createElement('strong'); number.textContent = String(value);
+                const name = document.createElement('span'); name.textContent = label;
+                card.append(number,name); stats.appendChild(card);
+            }
+            const query = (document.getElementById('tt-owner-item-search')?.value || '').trim().toLowerCase();
+            const onlyLow = document.getElementById('tt-owner-low-only')?.checked;
+            const products = storeShirts.filter(p => String(p.name).toLowerCase().includes(query) && (!onlyLow || Number(p.stock) <= 5));
+            list.replaceChildren();
+            if (!products.length) { list.textContent = 'No matching products.'; return; }
+            for (const p of products) {
+                const card = document.createElement('div'); card.className = 'tt-owner-product';
+                const fields = document.createElement('div'); fields.className = 'tt-owner-product-fields';
+                const createField = (label, val, type) => {
+                    const wrap=document.createElement('label'); wrap.textContent=label;
+                    const input=document.createElement('input'); input.type=type; input.value=val;
+                    if(type==='number'){input.min='0';input.step=label==='Stock'?'1':'0.01'}
+                    wrap.appendChild(input);fields.appendChild(wrap);return input;
+                };
+                const name = createField('Product name',p.name,'text');
+                const price = createField('Regular price',p.price,'number');
+                const stock = createField('Stock',p.stock,'number');
+                const button=document.createElement('button'); button.type='button'; button.className='tt-owner-save';button.textContent='Save';
+                button.onclick=()=>saveOwnerProduct(p.id,name.value,price.value,stock.value);
+                fields.appendChild(button);card.appendChild(fields);list.appendChild(card);
+            }
+        }
+
+        async function saveOwnerProduct(id, name, price, stock) {
+            if (currentUser !== 'owner') return;
+            const status = document.getElementById('tt-owner-save-status');
+            const item = storeShirts.find(p=>String(p.id)===String(id));
+            const parsedPrice=Number(price), parsedStock=Number(stock);
+            if (!item || !name.trim() || !Number.isFinite(parsedPrice) || parsedPrice<0 || !Number.isInteger(parsedStock) || parsedStock<0)
+                return status.textContent='Enter a name, a nonnegative price, and a whole-number stock count.';
+            const old = {name:item.name,price:item.price,stock:item.stock};
+            item.name=name.trim();item.price=parsedPrice;item.stock=parsedStock;
+            if (item.onSale && Number(item.salePrice)>parsedPrice) item.salePrice=parsedPrice;
+            const ok=await saveCloudStore();
+            if (!ok) Object.assign(item,old);
+            status.textContent=ok?'Saved product details.':'Save failed; changes reverted in this view.';
+            renderOwnerInventory();renderAdminDiscounts();renderStoreUI();
+        }
+
+        function exportOwnerInventory() {
+            if(currentUser!=='owner') return;
+            const protect=value => {const raw=String(value ?? '');const safe=/^[=+@\-]/.test(raw)? "'"+raw:raw;return '"'+safe.replace(/"/g,'""')+'"';};
+            const columns=['Product','Regular Price','Current Sale Price','Stock','On Sale'];
+            const rows=storeShirts.map(p=>[p.name,p.price,p.salePrice??p.price,p.stock,p.onSale?'Yes':'No']);
+            const csv=[columns,...rows].map(row=>row.map(protect).join(',')).join('\r\n');
+            const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+            const link=document.createElement('a');link.href=url;link.download='tomboy-tuff-inventory.csv';link.click();
+            setTimeout(()=>URL.revokeObjectURL(url),1000);
+        }
+
         function renderAdminDiscounts() {
             const list = document.getElementById('admin-discount-list');
             if(!list) return;
@@ -726,33 +1064,116 @@
             alert(`Discount updated for ${s.name}!`);
         }
 
-        function addPromoCode() {
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+        }
+
+        function renderPromoProductOptions() {
+            const select = document.getElementById('new-code-product');
+            if (!select) return;
+            const selected = select.value;
+            select.replaceChildren(new Option('All items', 'all'));
+            storeShirts.forEach(item => select.add(new Option(item.name, String(item.id))));
+            if ([...select.options].some(option => option.value === selected)) select.value = selected;
+        }
+
+        function togglePromoLimit() {
+            const capped = document.getElementById('new-code-limit').value === '50';
+            document.getElementById('promo-limit-hint').textContent = capped
+                ? 'Available to the first 50 unique customers who complete a purchase.'
+                : 'Available to unlimited customers until the code expires or you delete it.';
+        }
+
+        function promoRemaining(promo) {
+            if (promo.maxCustomers == null) return Infinity;
+            return Math.max(0, Number(promo.maxCustomers) - Number(promo.redeemedCount || 0));
+        }
+
+        function togglePromoExpiry() {
+            const value = document.getElementById('new-code-expiry').value;
+            document.getElementById('new-code-days').style.display = value === 'days' ? 'block' : 'none';
+            document.getElementById('new-code-days-label').style.display = value === 'days' ? 'block' : 'none';
+        }
+
+        function isValidPromo(promo, time = Date.now()) {
+            return promo && Number.isFinite(Number(promo.amount)) && Number(promo.amount) > 0 &&
+                ['percent','fixed'].includes(promo.type) &&
+                (promo.type !== 'percent' || Number(promo.amount) <= 100) &&
+                (promo.expiresAt == null || (Number.isFinite(Number(promo.expiresAt)) && Number(promo.expiresAt) > time)) &&
+                promoRemaining(promo) > 0;
+        }
+
+        function promoEligibleSubtotal(promo) {
+            if (!users[currentUser] || !Array.isArray(users[currentUser].cart)) return 0;
+            return users[currentUser].cart.reduce((total, item) => total +
+                (promo.productId === 'all' || String(promo.productId) === String(item.id) ? item.price : 0), 0);
+        }
+
+        function calcPromoReduction(promo) {
+            if (!isValidPromo(promo)) return 0;
+            const subtotal = promoEligibleSubtotal(promo);
+            if (!subtotal) return 0;
+            const discount = promo.type === 'percent' ? subtotal * Number(promo.amount) / 100 : Number(promo.amount);
+            return Math.round(Math.min(subtotal, discount) * 100) / 100;
+        }
+
+        async function addPromoCode() {
+            if (currentUser !== 'owner') return;
+            const status = document.getElementById('promo-admin-status');
             const code = document.getElementById('new-code-name').value.trim().toUpperCase();
-            const pct = parseInt(document.getElementById('new-code-pct').value);
-            if(!code || isNaN(pct)) return alert("Enter valid code and percentage.");
-            promoCodes[code] = pct;
-            localStorage.setItem('tomboytuff_promos', JSON.stringify(promoCodes));
+            const type = document.getElementById('new-code-type').value;
+            const amount = Number(document.getElementById('new-code-value').value);
+            const productId = document.getElementById('new-code-product').value;
+            const expiryMode = document.getElementById('new-code-expiry').value;
+            const maxCustomers = document.getElementById('new-code-limit').value === '50' ? 50 : null;
+            if (!/^[A-Z0-9_-]{3,32}$/.test(code)) return status.textContent = 'Use 3–32 letters, numbers, - or _.';
+            if (!(amount > 0) || !Number.isFinite(amount) || (type === 'percent' && amount > 100)) return status.textContent = 'Enter a valid discount (percentages max 100).';
+            if (Object.hasOwn(promoCodes, code)) return status.textContent = 'That code already exists. Delete it first.';
+            let expiresAt = null;
+            if (expiryMode === 'days') {
+                const days = Number(document.getElementById('new-code-days').value);
+                if (!Number.isInteger(days) || days < 1 || days > 3650) return status.textContent = 'Choose 1–3650 days.';
+                expiresAt = Date.now() + days * 86400000;
+            }
+            promoCodes[code] = { type, amount, productId, expiresAt, maxCustomers, redeemedCount: 0, createdAt: Date.now() };
+            if (!await saveCloudStore()) { delete promoCodes[code]; return status.textContent = 'Save failed — check Supabase settings.'; }
+            status.textContent = 'Promo saved. Secure backend authorization is still required before going live.';
             document.getElementById('new-code-name').value = '';
-            document.getElementById('new-code-pct').value = '';
+            document.getElementById('new-code-value').value = '';
             renderAdminCodes();
         }
 
-        function deletePromoCode(code) {
+        async function deletePromoCode(code) {
+            if (currentUser !== 'owner' || !Object.hasOwn(promoCodes, code)) return;
             delete promoCodes[code];
-            localStorage.setItem('tomboytuff_promos', JSON.stringify(promoCodes));
+            await saveCloudStore();
             renderAdminCodes();
         }
 
         function renderAdminCodes() {
             const list = document.getElementById('admin-codes-list');
-            if(!list) return;
-            if(Object.keys(promoCodes).length === 0) return list.innerHTML = "<p style='color:var(--text-muted); font-size:0.9rem;'>No active codes.</p>";
-            list.innerHTML = Object.keys(promoCodes).map(code => `
-                <div class="code-item">
-                    <span><strong>${code}</strong> (${promoCodes[code]}% OFF)</span>
-                    <button onclick="deletePromoCode('${code}')" style="background:none; border:none; color:var(--danger); cursor:pointer;">Delete</button>
-                </div>
-            `).join('');
+            if (!list) return;
+            list.replaceChildren();
+            if (currentUser !== 'owner') return;
+            const entries = Object.entries(promoCodes);
+            if (!entries.length) { list.textContent = 'No promo codes created yet.'; return; }
+            for (const [code, p] of entries) {
+                const product = p.productId === 'all' ? 'All products' : (storeShirts.find(s => String(s.id) === String(p.productId))?.name || 'Specific product');
+                const state = p.expiresAt == null ? 'No expiration' : Number(p.expiresAt) <= Date.now() ? 'Expired' : `${Math.ceil((Number(p.expiresAt)-Date.now())/86400000)} day(s) left`;
+                const availability = p.maxCustomers == null ? 'Unlimited customers' : `${promoRemaining(p)} of ${p.maxCustomers} customer redemptions left`;
+                const status = !isValidPromo(p) ? 'INACTIVE' : 'ACTIVE';
+                const line = document.createElement('div');
+                line.className = 'code-item';
+                const label = document.createElement('span');
+                const strong = document.createElement('strong');
+                strong.textContent = code;
+                label.append(strong, document.createTextNode(` — ${p.type === 'percent' ? p.amount + '%' : '$' + Number(p.amount).toFixed(2)} off · ${product} · ${availability} · ${state} · ${status}`));
+                const btn = document.createElement('button');
+                btn.type = 'button'; btn.textContent = 'Delete';
+                btn.style.cssText = 'background:none;border:0;color:var(--danger);cursor:pointer';
+                btn.onclick = () => deletePromoCode(code);
+                line.append(label, btn); list.appendChild(line);
+            }
         }
 
         function toggleBanUser(username) {
@@ -779,33 +1200,18 @@
 
         function renderStoreUI() {
             const grid = document.getElementById('store-listings');
-            if (storeShirts.length === 0) return grid.innerHTML = '<p style="color:var(--text-muted); grid-column: 1/-1;">No items published yet.</p>';
-            
-            grid.innerHTML = storeShirts.map(s => {
-                const outOfStock = s.stock <= 0;
-                const deleteBtn = (currentUser === 'owner') ? `<button class="delete-shirt-btn" onclick="deleteShirt(event, ${s.id})">Delete</button>` : ``;
-                
-                let imgList = s.images && s.images.length > 0 ? s.images : [s.img || 'https://via.placeholder.com/300x300?text=No+Image'];
-                let displayImg = imgList[0];
-
-                let priceHTML = `$${s.price.toFixed(2)}`;
-                if (s.onSale) {
-                    priceHTML = `<span style="text-decoration: line-through; color: var(--text-muted); font-size: 0.85rem; margin-right: 6px;">$${s.price.toFixed(2)}</span> <span style="color: var(--success);">$${s.salePrice.toFixed(2)}</span>`;
-                }
-
-                return `
-                <div class="shirt-card ${outOfStock ? 'out-of-stock' : ''}" onclick="openProduct(${s.id})">
-                    ${deleteBtn}
-                    <div class="stock-badge">${outOfStock ? 'SOLD OUT' : s.stock + ' Left'}</div>
-                    <div class="shirt-img-container">
-                        <img class="shirt-img" src="${displayImg}" alt="${s.name}" loading="lazy">
-                    </div>
-                    <div class="shirt-info">
-                        <div>${s.name}</div>
-                        <div style="font-size:0.9rem; margin-top:5px;">${priceHTML}</div>
-                    </div>
-                </div>`;
-            }).join('');
+            const search = (document.getElementById('tt-search-products')?.value || document.getElementById('tt-header-search')?.value || '').trim().toLowerCase();
+            const order = document.getElementById('tt-sort-products')?.value || 'new';
+            const filteredShirts = storeShirts.filter(s => String(s.name || '').toLowerCase().includes(search));
+            filteredShirts.sort((a,b) => order === 'name' ? String(a.name).localeCompare(String(b.name)) : Number(b.id)-Number(a.id));
+            const countNode = document.getElementById('store-results-count');
+            if (countNode) countNode.textContent = `${filteredShirts.length} item${filteredShirts.length===1?'':'s'} available to browse`;
+            if (filteredShirts.length === 0) {
+                grid.innerHTML = '<p style="color:var(--text-muted);grid-column:1/-1;">No matching shirts found.</p>';
+            } else {
+                grid.innerHTML = filteredShirts.map(renderShirtCard).join('');
+            }
+            updateFavoriteUI();
         }
 
         function openProduct(id) {
@@ -828,6 +1234,7 @@
 
             document.getElementById('modal-shirt-stock-display').innerText = `${shirt.stock} Left In Stock`;
             document.getElementById('product-modal').style.display = 'flex';
+            updateFavoriteUI();
         }
 
         function updateCarouselView() {
@@ -918,6 +1325,7 @@
         function updateCartUI() {
             const cart = users[currentUser].cart;
             document.getElementById('cart-count').innerText = cart.length;
+            const headerCount = document.getElementById('cart-count-header'); if (headerCount) headerCount.innerText = cart.length;
             const container = document.getElementById('cart-items');
             if (cart.length === 0) {
                 container.innerHTML = '<p style="color:var(--text-muted);">Your cart is empty.</p>';
@@ -950,6 +1358,7 @@
             if(users[currentUser].cart.length === 0) return;
             checkoutTotal = users[currentUser].cart.reduce((sum, item) => sum + item.price, 0);
             activeDiscountPct = 0;
+            activePromoCode = null;
             document.getElementById('promo-code').value = '';
             document.getElementById('tos-checkbox').checked = false;
             updateCheckoutTotalDisplay();
@@ -957,66 +1366,34 @@
         }
 
         function applyPromo() {
-            const codeInput = document.getElementById('promo-code').value.trim().toUpperCase();
-            if(!codeInput) return;
-            if (promoCodes.hasOwnProperty(codeInput)) {
-                activeDiscountPct = promoCodes[codeInput];
+            const code = document.getElementById('promo-code').value.trim().toUpperCase();
+            const promo = Object.hasOwn(promoCodes, code) ? promoCodes[code] : null;
+            if (!isValidPromo(promo)) {
+                activePromoCode = null;
                 updateCheckoutTotalDisplay();
-                alert(`You get ${activeDiscountPct}% off on ${codeInput}!`);
-            } else {
-                alert("Invalid promo code.");
+                return alert('Promo code is invalid, expired, or has reached its redemption limit.');
             }
+            if (calcPromoReduction(promo) <= 0) {
+                activePromoCode = null;
+                updateCheckoutTotalDisplay();
+                return alert('This code does not apply to the items in your cart.');
+            }
+            activePromoCode = code;
+            updateCheckoutTotalDisplay();
+            alert(`Preview: ${code} would save $${calcPromoReduction(promo).toFixed(2)}. A secure checkout is needed to confirm and count redemptions.`);
         }
 
         function updateCheckoutTotalDisplay() {
-            let final = checkoutTotal;
-            if(activeDiscountPct > 0) final = final - (final * (activeDiscountPct / 100));
-            document.getElementById('checkout-total').innerText = final.toFixed(2);
+            let reduction = 0;
+            if (activePromoCode && Object.hasOwn(promoCodes, activePromoCode)) {
+                reduction = calcPromoReduction(promoCodes[activePromoCode]);
+            }
+            const total = Math.max(0, checkoutTotal - reduction);
+            document.getElementById('checkout-total').innerText = total.toFixed(2);
         }
 
         function processPayment() {
-            if(document.getElementById('cc-num').value.length < 15) return alert("Please enter a valid card number.");
-            if(!document.getElementById('tos-checkbox').checked) return alert("You must agree to the Terms of Service to purchase.");
-            
-            const cart = users[currentUser].cart;
-            let webhookContent = `**🛒 New Purchase from TOMBOYTUFF**\n**User:** ${currentUser}\n**Total Paid:** $${document.getElementById('checkout-total').innerText}\n**Items:**\n`;
-            
-            cart.forEach(item => {
-                let liveShirt = storeShirts.find(s => s.id === item.id);
-                if(liveShirt && liveShirt.stock > 0) {
-                    liveShirt.stock -= 1;
-                }
-                
-                let finalPrice = activeDiscountPct > 0 ? item.price - (item.price * (activeDiscountPct / 100)) : item.price;
-                users[currentUser].orders.push(`${item.name} (Size: ${item.size}) - Paid: $${finalPrice.toFixed(2)}`);
-                webhookContent += `- ${item.name} (Size: ${item.size})\n`;
-            });
-            
-            saveCloudStore();
-
-            let currentAvatar = users[currentUser].avatar;
-            if (!currentAvatar.startsWith('http') && !currentAvatar.startsWith('data:')) {
-                currentAvatar = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1) + currentAvatar;
-            }
-            
-            let payload = { content: webhookContent, username: currentUser };
-            if (!currentAvatar.startsWith('data:')) payload.avatar_url = currentAvatar;
-            
-            users[currentUser].cart = [];
-            localStorage.setItem('tomboytuff_users', JSON.stringify(users));
-            
-            fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            
-            updateCartUI(); 
-            loadOrders(); 
-            
-            document.getElementById('cc-name').value = ''; 
-            document.getElementById('cc-num').value = '';
-            document.getElementById('cc-exp').value = ''; 
-            document.getElementById('cc-cvc').value = '';
-            
-            alert("Thank you for purchasing from TOMBOYTUFF!");
-            switchView('store');
+            alert('Checkout is in preview mode. Connect a secure payment provider and validate promotions on your server before accepting payments.');
         }
 
         function loadOrders() {
@@ -1033,7 +1410,10 @@
             if(link) link.classList.add('active-link');
             if (viewName === 'store') {
                 renderAdminDiscounts();
+                renderOwnerInventory();
+                renderStoreUI();
             }
+            if (viewName === 'favorites') renderFavorites();
             window.scrollTo(0,0);
         }
 
